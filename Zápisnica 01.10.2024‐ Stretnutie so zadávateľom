@@ -1,0 +1,15 @@
+<h1> Stretnutie so zadávateľom - 01.10.2024</h1>
+Pritomni: Michal	Jaroš, Jakub	Fraňo, Filip	Kotoč, Eva Ivanusyková, [Ján Pastorek]
+Na stretnutí sme si vysvetlili pojem metamatematiky. Začali sme sa rozprávať o požiadavkach na aplikáciu. Z toho vzišli nasledujúce požiadavky.
+<h2> Funkcionalita</h2>
+<UL>
+ <LI>Extrahovanie axióm z metamath databázy</LI>
+ <LI>Vizualizácia prepojenia axióm formou grafu</LI>
+ <LI>Zaznačovanie a vyhľadávanie axióm, pre lepšiu orientáciu</LI>
+ <LI>Zobrazenie súvislostí, medzi zvolenými vetami</LI>
+<LI>Export vygenerovaného grafu</LI>
+</UL>
+<h2> Používatelia</h2>
+Z pokynov sa domnievame, že nebude väčšie množstvo typov používateľov. Jeden bude môcť využívať plnú funkcionalitu aplikácie.
+
+Ďalej sme sa porozprávali o implementácii aplikácií - musíme ešte hľadať aké máme možnosti.
