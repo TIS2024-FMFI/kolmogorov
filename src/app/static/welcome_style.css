@@ -1,0 +1,80 @@
+body, html {
+    height: 100%;
+    margin: 0;
+  }
+  .wrapper {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .container {
+    max-width: 800px;
+    text-align: center;
+  }
+  .title {
+    font-size: 2.5rem;
+    font-weight: bold;
+  }
+  .description {
+    font-size: 1rem;
+    margin-top: 20px;
+    color: #6c757d;
+  }
+  .btn {
+    margin: 20px 10px 0 10px;
+  }
+  .file-details {
+    margin-top: 20px;
+    color: #333;
+    font-size: 1rem;
+  }
+  .error-message {
+    margin-top: 30px;
+    color: #d9534f;
+    display: none; /* Initially hidden */
+  }
+
+  .success-message {
+    margin-top: 30px;
+    display: none; /* Initially hidden */
+  }
+  .error-message.active {
+    display: block;
+  }
+
+  .success-message.active {
+    display: block;
+  }
+  .drag-and-drop-area {
+    border: 2px dashed #007bff;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 10px;
+    color: #007bff;
+    background-color: #f8f9fa;
+  }
+  .drag-and-drop-area.dragging {
+    background-color: #e2e6ea;
+    border-color: #0056b3;
+  }
+
+  .theory-selection {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+  
+  .theory {
+    border: 2px solid #007bff;
+    padding: 20px;
+    cursor: pointer;
+    width: 45%;
+    text-align: center;
+    border-radius: 10px;
+  }
+  
+  .theory.selected {
+    background-color: #e2e6ea;
+    border-color: #0056b3;
+  }
