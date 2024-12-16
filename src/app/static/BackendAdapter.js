@@ -10,4 +10,5 @@ class BackendAdapter {
 
     parseDatabase(file) {
     }
+    
 }
