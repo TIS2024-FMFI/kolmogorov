@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theory Graph Viewer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../static/style/graph.css">
+
+<body>
+  <div class="container-fluid">
+    <div class="resizable-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <input type="text" class="form-control mb-3" placeholder="Search for theorem">
+        <button class="btn btn-primary custom-button">Show Equivalent Theorems</button>
+        
+        <h5>Edges Setup:</h5>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="edgeSetup" id="adjacentEdges" checked>
+          <label class="form-check-label" for="adjacentEdges">
+            Show only edges between adjacent floors
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="edgeSetup" id="allEdges">
+          <label class="form-check-label" for="allEdges">
+            Show all edges
+          </label>
+        </div>
+
+        <h5 class="mt-3">Proof Setup:</h5>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="showAxioms">
+          <label class="form-check-label" for="showAxioms">Show Axioms</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="includeNodes" checked>
+          <label class="form-check-label" for="includeNodes">
+            Include only nodes used in proof
+          </label>
+        </div>
+
+        <h5 class="mt-3">Set Graph Depth:</h5>
+        <input type="number" class="form-control mb-3" placeholder="Enter depth">
+      </div>
+
+      <!-- Main content area -->
+      <div class="resizable-content">
+        <!-- Top controls -->
+        <div class="d-flex justify-content-between mt-3">
+          <h4>Statements Supporting Theory</h4>
+          <div>
+            <button class="btn btn-outline-secondary">Switch Type</button>
+            <div class="btn-group">
+              <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Export
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Export as PNG</a></li>
+                <li><a class="dropdown-item" href="#">Export as PDF</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Graph placeholder -->
+        <div id="cy">
+          <!-- Cytoscape.js graph will render here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.24.0/cytoscape.min.js"></script>
+
+</body>
+</html>

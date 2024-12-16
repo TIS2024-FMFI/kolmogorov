@@ -1,3 +1,5 @@
+import Statement from './Statement';
+
 class BackendAdapter {
     getStatement(id) {
         return id;
