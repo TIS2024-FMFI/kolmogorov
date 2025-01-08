@@ -1,5 +1,5 @@
 from flask import Flask # type: ignore
-from .routes import home, parse_database, get_statement, theory
+from .routes import home, parse_database, get_statement, theory, parse_set_mm
 
 def create_app():
     app = Flask(__name__)
@@ -9,4 +9,5 @@ def create_app():
     
     app.add_url_rule('/parse_database', 'parse_database', parse_database, methods=['POST'])
     app.add_url_rule('/statement/<label>', 'get_statement', get_statement, methods=['GET'])
+    app.add_url_rule('/parse_set_mm', 'parse_set_mm', parse_set_mm, methods=['POST'])
     return app

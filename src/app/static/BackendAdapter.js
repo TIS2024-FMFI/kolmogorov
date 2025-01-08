@@ -41,4 +41,25 @@ export class BackendAdapter {
             throw error;
         }
     }
+
+    async parseSetMm() {
+        try {
+            const response = await fetch(`${this.baseURL}/parse_set_mm`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return {
+                success: true,
+                message: data.message
+            };
+        } catch (error) {
+            console.error("Error:", error);
+            throw error;
+        }
+    }
 }

@@ -22,12 +22,6 @@
         <button class="btn btn-primary" id="submit-file-btn">Submit File</button>
       </div>
 
-      <!-- Buttons for selecting set.mm and part_ab.mm -->
-      <div>
-        <button class="btn btn-outline-secondary" id="select-set-mm-btn">Select set.mm</button>
-        <button class="btn btn-outline-secondary" id="select-part-ab-mm-btn">Select part_ab.mm</button>
-      </div>
-
       <!-- Drag-and-Drop Area -->
       <div class="drag-and-drop-area" id="drag-and-drop-area">
         Drag and drop a file here or click "Select File" to upload
@@ -42,6 +36,11 @@
       <div class="error-message alert alert-danger" id="error-message">
         <i class="bi bi-exclamation-circle"></i> No file selected. Please upload a file first!
       </div>
+
+      <div>
+        <button class="btn btn-outline-secondary" id="select-set-mm-btn">Parse set.mm</button>
+      </div>
+
 
       <!-- Parsing message -->
       <div class="success-message alert alert-success" id="success-message">

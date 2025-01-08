@@ -28,7 +28,7 @@ class WelcomeApp {
     this.fileUploader = new FileUploadHandler({
       fileInput: this.elements.fileInput,
       dragDropArea: this.elements.dragAndDropArea,
-      onFileSelect: (file) => this.onFileSelect(file),
+      onFileSelect: (file) => this.onFileSelect(file),  // Changed from handleFileSelect
       validateFile: (file) => file && file.name.endsWith('.mm')
     });
   }
@@ -42,6 +42,7 @@ class WelcomeApp {
       this.handleSetMmSelect());
   }
 
+  // New method to handle file selection
   onFileSelect(file) {
     this.uiManager.updateFileDetails(file);
   }
@@ -80,19 +81,12 @@ class WelcomeApp {
     
     try {
       this.uiManager.startParsingAnimation();
-      const response = await fetch(`${this.backendAdapter.baseURL}/parse_set_mm`, {
-        method: 'POST'
-      });
+      const response = await this.backendAdapter.parseSetMm();
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.message === 'Database parsed successfully.') {
+      if (response.success) {
         window.location.href = '/theory';
       } else {
-        throw new Error(data.message);
+        throw new Error(response.message);
       }
     } catch (error) {
       this.uiManager.showError(`Error: ${error.message}`);
@@ -106,4 +100,3 @@ class WelcomeApp {
 document.addEventListener('DOMContentLoaded', () => {
   new WelcomeApp();
 });
-
