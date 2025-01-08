@@ -1,9 +1,12 @@
 from flask import Flask # type: ignore
-from .routes import home
+from .routes import home, parse_database, get_statement, theory
 
 def create_app():
     app = Flask(__name__)
     
-    app.add_url_rule('/', 'home', home, methods=['GET', 'POST'])
+    app.add_url_rule('/', 'home', home, methods=['GET'])
+    app.add_url_rule('/theory', 'theory', theory, methods=['GET'])
     
+    app.add_url_rule('/parse_database', 'parse_database', parse_database, methods=['POST'])
+    app.add_url_rule('/statement/<label>', 'get_statement', get_statement, methods=['GET'])
     return app

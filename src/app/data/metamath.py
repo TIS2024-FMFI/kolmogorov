@@ -65,6 +65,9 @@ class Statement:
     
     def put_statement_in_ref(self,id):
         self.is_referenced_by.add(id)
+    
+    def get_is_referenced_by(self):
+        return self.is_referenced_by
         
     def get_tag(self):
         return self.label
@@ -120,8 +123,10 @@ class Database:
 
 def parse(fpath, max_rules=-1, last_rule=""):
     db = Database()
-
-    # parser state
+        
+    # import os
+    # fpath = os.path.join("uploads","set.mm")
+    
     in_comment = False  # whether currently in comment
     current_tag = None  # most recent tag (excluding comments)
     label = None  # most recent label
@@ -131,8 +136,8 @@ def parse(fpath, max_rules=-1, last_rule=""):
     current_comment = ""  # stores the current comment
 
     with open(fpath, "r") as f:
+        
         for n, line in enumerate(f):
-
             if len(db.rules) == max_rules: break
             if rule is not None and rule.consequent.label == last_rule: break
 
@@ -232,7 +237,7 @@ def parse(fpath, max_rules=-1, last_rule=""):
                 if token[0] == "$" and token[1] not in "()": current_tag = token[1]
                 if current_tag in ("$.", "$}"): current_tag = None
                 
-
+    db.fill_references()
     return db
 
 if __name__ == "__main__":
@@ -243,9 +248,12 @@ if __name__ == "__main__":
 
     db = parse(fpath)
     
-    db.fill_references()
+    #db.fill_references()
 
     print(db.statements["2p2e4"])
+    print(db.statements["2p2e4"].is_referenced_by)
+    print("---------")
+    print(db.statements["2p2e4"].proved_from_statements)
     #print(db.statements["ax-mp"].get_referenced_by())
     #print(f"{len(db.statements)} statements total, {len(db.rules)} rules total")
 
