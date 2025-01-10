@@ -11,13 +11,18 @@ class TheoryHandler {
         }
 
         const theory = theoryNumber === 1 ? this.theory1 : this.theory2;
+        const otherTheory = theoryNumber === 1 ? this.theory2 : this.theory1;
         
+        // Check both theories for duplicates
         if (theory.some(s => s.id === statement.id)) {
             throw new Error('Statement already exists in this theory');
         }
+        if (otherTheory.some(s => s.id === statement.id)) {
+            throw new Error('Statement already exists in the other theory');
+        }
 
         theory.push(statement);
-        this.saveTheories(); // Save after adding
+        this.saveTheories();
         return true;
     }
 

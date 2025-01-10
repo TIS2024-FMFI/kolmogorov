@@ -9,6 +9,7 @@ class TheoryApp {
         this.selectedTheory = 'theory-1';
         this.initializeElements();
         this.setupEventListeners();
+        this.loadExistingTheories();
     }
 
     initializeElements() {
@@ -156,6 +157,44 @@ class TheoryApp {
                 contentElement.innerHTML = '<div class="placeholder-text">No statements added yet</div>';
             }
         }
+    }
+
+    loadExistingTheories() {
+        const theories = this.theoryHandler.getTheories();
+        
+        // Load Theory 1
+        if (theories.theory1.length > 0) {
+            this.elements.content1.innerHTML = ''; // Clear placeholder
+            theories.theory1.forEach(statement => {
+                this.createStatementElement(statement, this.elements.content1);
+            });
+        }
+
+        // Load Theory 2
+        if (theories.theory2.length > 0) {
+            this.elements.content2.innerHTML = ''; // Clear placeholder
+            theories.theory2.forEach(statement => {
+                this.createStatementElement(statement, this.elements.content2);
+            });
+        }
+    }
+
+    createStatementElement(statement, container) {
+        const statementEl = document.createElement('div');
+        statementEl.className = 'statement-item p-3 border-bottom';
+        statementEl.innerHTML = `
+            <strong>${statement.id}</strong>
+            <p class="mb-0 text-muted">${statement.description}</p>
+        `;
+
+        statementEl.addEventListener('dblclick', () => {
+            this.removeStatementFromTheory(statement.id, statementEl);
+        });
+
+        statementEl.style.cursor = 'pointer';
+        statementEl.title = 'Double-click to remove';
+
+        container.appendChild(statementEl);
     }
 }
 
