@@ -54,4 +54,4 @@ export class UIStateManager {
     this.elements.fileDetails.textContent = 'No file selected.';
     this.showError('No file selected. Please upload a file first!');
   }
-} 
+}
