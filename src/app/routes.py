@@ -17,6 +17,9 @@ def home():
 def theory():
     return render_template('theory.html')
 
+def graph():
+    return render_template('graph.html')
+
 
 def parse_database():
     """Endpoint to parse a Metamath database file."""
