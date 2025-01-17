@@ -1,3 +1,5 @@
+import Settings from '../static/settings.js';
+
 class SettingsUp extends Settings {
     constructor() {
       super(); 
@@ -18,3 +20,5 @@ class SettingsUp extends Settings {
       return this.otherStartpoints;
     }
   }
+
+export default SettingsUp

@@ -1,3 +1,5 @@
+import Settings from '../static/settings.js';
+
 class SettingsDown extends Settings {
     constructor() {
       super();
@@ -18,3 +20,5 @@ class SettingsDown extends Settings {
       return this.shortestPossibleDistance;
     }
   }
+
+export default SettingsDown
