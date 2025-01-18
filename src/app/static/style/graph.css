@@ -1,0 +1,36 @@
+    /* Sidebar styling */
+    .sidebar {
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        padding: 20px;
+        height: 100vh;
+        resize: horizontal;
+        overflow: auto;
+        min-width: 250px;
+        max-width: 50%;
+      }
+      
+      /* Graph container */
+      #cy {
+        width: 100%;
+        height: 85vh;
+        border: 1px solid #ccc;
+        margin-top: 20px;
+        border-radius: 8px;
+      }
+  
+      /* Buttons */
+      .custom-button {
+        margin-bottom: 10px;
+        width: 100%;
+      }
+  
+      .resizable-container {
+        display: flex;
+        height: 100vh;
+      }
+  
+      .resizable-content {
+        flex-grow: 1;
+        padding: 10px;
+      }

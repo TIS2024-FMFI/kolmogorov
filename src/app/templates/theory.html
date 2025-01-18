@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statement Selector</title>
+  <link rel="stylesheet" href="../static/style/theory.css">
+  <script type="module" src="../static/theory.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <h1 class="text-center mb-4" style="font-size: 3rem;">Ľudia! Ľúbte sa!</h1>
+  <div class="container mt-5">
+    <div class="row mb-3">
+      <div class="col">
+        <input 
+          type="text" 
+          id="statement-input" 
+          class="form-control" 
+          placeholder="Search or add a statement (e.g., 'pythag' or '2p2e4')" 
+          aria-label="Search or add statement">
+      </div>
+      <div class="col-auto">
+        <button id="add-statement-btn" class="btn btn-primary">Add Statement</button>
+      </div>
+      <div class="col-auto">
+        <button id="import-theory-btn" class="btn btn-primary">Import Theory</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="theory-box" id="theory-1">
+          <div class="theory-header">1. Theory</div>
+          <div class="theory-content" id="content-1">
+            <p class="placeholder-text">Theory can also be imported</p>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="theory-box" id="theory-2">
+          <div class="theory-header">2. Theory</div>
+          <div class="theory-content" id="content-2">
+            <p class="placeholder-text">Can be empty :)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col text-center">
+        <button id="visualize-btn" class="btn btn-secondary">Visualize</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
