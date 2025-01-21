@@ -254,7 +254,7 @@ class TheoryApp {
             <div class="suggestion-item" data-label="${result.label}">
                 <div class="suggestion-label">${result.label}</div>
                 <div class="suggestion-description">
-                    ${result.description ? result.description.substring(3, 153) + '...' : 'No description available'}
+                    ${result.description ? result.description.substring(3) : 'No description available'}
                 </div>
             </div>
         `).join('');
