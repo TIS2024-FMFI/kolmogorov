@@ -103,7 +103,7 @@ class DataHandler:
         matches.sort(key=lambda x: x['score'], reverse=True)
         
         # Return top 5 matches
-        return matches[:5]
+        return matches[:10]
         
     def get_statement(self, label):
         try:
