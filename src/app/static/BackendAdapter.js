@@ -3,6 +3,8 @@ import Statement from './Statement.js';
 export class BackendAdapter {
     constructor(baseURL) {
         this.baseURL = baseURL || "http://127.0.0.1:5000";
+        this.requestQueue = [];
+        this.processingQueue = false;
     }
 
     async parseFile(formData) {
@@ -28,18 +30,36 @@ export class BackendAdapter {
     }
 
     async getStatement(id) {
-        const url = `${this.baseURL}/statement/${id}`;
+        return new Promise((resolve, reject) => {
+            this.requestQueue.push({ id, resolve, reject });
+            if (!this.processingQueue) {
+                this.processQueue();
+            }
+        });
+    }
+
+    async processQueue() {
+        if (this.requestQueue.length === 0) {
+            this.processingQueue = false;
+            return;
+        }
+
+        this.processingQueue = true;
+        const { id, resolve, reject } = this.requestQueue.shift();
+
         try {
-            const response = await fetch(url);
+            await new Promise(r => setTimeout(r, 100)); // Add delay between requests
+            const response = await fetch("${this.baseURL}/statement/${id}");
             if (!response.ok) {
-                throw new Error(`Error fetching statement: ${response.statusText}`);
+                throw new Error("Error fetching statement: ${response.statusText}");
             }
             const data = await response.json();
-            return new Statement(data);
+            resolve(new Statement(data));
         } catch (error) {
-            console.error("Error:", error);
-            throw error;
+            reject(error);
         }
+
+        setTimeout(() => this.processQueue(), 100);
     }
 
     async parseSetMm() {
@@ -63,3 +83,5 @@ export class BackendAdapter {
         }
     }
 }
+
+export default BackendAdapter
