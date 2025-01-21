@@ -43,23 +43,22 @@ export class BackendAdapter {
             this.processingQueue = false;
             return;
         }
-
+    
         this.processingQueue = true;
         const { id, resolve, reject } = this.requestQueue.shift();
-
+    
         try {
-            await new Promise(r => setTimeout(r, 100)); // Add delay between requests
-            const response = await fetch("${this.baseURL}/statement/${id}");
+            const response = await fetch(`${this.baseURL}/statement/${id}`);
             if (!response.ok) {
-                throw new Error("Error fetching statement: ${response.statusText}");
+                throw new Error(`Error fetching statement: ${response.statusText}`);
             }
             const data = await response.json();
             resolve(new Statement(data));
         } catch (error) {
             reject(error);
         }
-
-        setTimeout(() => this.processQueue(), 100);
+    
+        this.processQueue(); // Recursive call without delay
     }
 
     async parseSetMm() {
