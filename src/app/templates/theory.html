@@ -13,12 +13,16 @@
   <div class="container mt-5">
     <div class="row mb-3">
       <div class="col">
-        <input 
-          type="text" 
-          id="statement-input" 
-          class="form-control" 
-          placeholder="Search or add a statement (e.g., 'pythag' or '2p2e4')" 
-          aria-label="Search or add statement">
+        <div class="search-container">
+          <input 
+            type="text" 
+            id="statement-input" 
+            class="form-control" 
+            placeholder="Search or add a statement (e.g., 'pythag' or '2p2e4')" 
+            aria-label="Search or add statement">
+          <div class="search-loading" id="search-loading"></div>
+          <div id="search-suggestions" class="suggestions-container"></div>
+        </div>
       </div>
       <div class="col-auto">
         <button id="add-statement-btn" class="btn btn-primary">Add Statement</button>

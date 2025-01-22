@@ -5,7 +5,9 @@ class Statement {
     }
 
     this.id = jsonData.id || null;
-    this.description = jsonData.description || "No description available.";
+    this.description = typeof jsonData.description === 'string' && jsonData.description.length >= 2
+      ? jsonData.description.substring(2).trim()
+      : "No description available.";
     this.proof = Array.isArray(jsonData.proof) ? jsonData.proof : [];
     this.type = jsonData.type || "unknown";
     this.referencedBy = Array.isArray(jsonData.referencedBy) ? jsonData.referencedBy : [];
