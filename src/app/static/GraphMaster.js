@@ -7,7 +7,7 @@ class GraphMaster {
     }
   
     async createGraph(settings) {
-      //temp
+      // Get initial statements
       let statements1 = await Promise.all([this.backendAdapter.getStatement("ax-1")]);
       let statements2 = await Promise.all([this.backendAdapter.getStatement("df-met")]);
 
@@ -15,6 +15,7 @@ class GraphMaster {
       const edges = [];
       const visited1 = new Set();
       const visited2 = new Set();
+      const toFetch = new Set(); // Track all statements we need to fetch
 
       //Initialize
       let current = [];
@@ -24,41 +25,7 @@ class GraphMaster {
         T2: 1
       });
 
-      statements1.forEach(s => {
-        if (!visited1.has(s.id)){
-          const newNode = {
-            data: {
-              id: s.id,
-              label: s.id,
-              type: "theory1"
-            },
-            classes: s.type == "$a" ? "t1a" : "t1s"
-          }
-
-          nodes.push(newNode);
-          visited1.add(s.id);
-          current.push(s)
-        }
-      });
-
-      statements2.forEach(s => {
-        if (!visited2.has(s.id)){
-          const newNode = {
-            data: {
-              id: s.id,
-              label: s.id,
-              type: "theory2"
-            },
-            classes: s.type == "$a" ? "t2a" : "t2s"
-          }
-
-          nodes.push(newNode);
-          visited2.add(s.id);
-          current.push(s);
-        }
-      });
-
-      function createAddNode(stat, newLayer){
+      function createAddNode(stat, newLayer) {
         const newNode = {
           data: {
             id: stat.id,
@@ -66,64 +33,98 @@ class GraphMaster {
             type: stat.type == "$a" ? "a" : "s"
           },
           classes: "node"
-        }
+        };
         newLayer.push(stat);
         nodes.push(newNode);
       }
 
-      //Generate graph
-      for (let i = 0; i < 5 && current.length > 0; i++){
-        console.log("Iteration: " + i);
-        console.log("Current: ", current);
+      // Add initial statements to visited sets
+      statements1.forEach(s => {
+        if (!visited1.has(s.id)){
+          visited1.add(s.id);
+          current.push(s);
+          // Add referenced statements to fetch queue
+          s.referencedBy.forEach(child => {
+            if (!visited1.has(child) && !visited2.has(child)) {
+              toFetch.add(child);
+            }
+          });
+        }
+      });
+
+      statements2.forEach(s => {
+        if (!visited2.has(s.id)){
+          visited2.add(s.id);
+          current.push(s);
+          // Add referenced statements to fetch queue
+          s.referencedBy.forEach(child => {
+            if (!visited1.has(child) && !visited2.has(child)) {
+              toFetch.add(child);
+            }
+          });
+        }
+      });
+
+      // Create initial nodes
+      current.forEach(s => {
+        const newNode = {
+          data: {
+            id: s.id,
+            label: s.id,
+            type: visited1.has(s.id) ? "theory1" : "theory2"
+          },
+          classes: visited1.has(s.id) ? (s.type == "$a" ? "t1a" : "t1s") : (s.type == "$a" ? "t2a" : "t2s")
+        };
+        nodes.push(newNode);
+      });
+
+      // Fetch all needed statements in parallel
+      const fetchPromises = Array.from(toFetch).map(id => this.backendAdapter.getStatement(id));
+      const fetchedStatements = await Promise.all(fetchPromises);
+      const statementMap = new Map(fetchedStatements.map(s => [s.id, s]));
+
+      // Process fetched statements
+      for (let i = 0; i < 5 && current.length > 0; i++) {
         let newLayer = [];
 
-        //Iterate over current layer
-        for (const parent of current){    
+        for (const parent of current) {
+          for (const childId of parent.referencedBy) {
+            const child = statementMap.get(childId);
+            if (!child) continue;
 
-          //Iterate over each child
-          for (const child of parent.referencedBy){
-
-            //Decide which theory it belongs to
-            if (visited1.has(parent.id) && !visited2.has(parent.id)){
-              if (!visited1.has(child)){
-                if (!visited2.has(child)){
-                  const newStat = await this.backendAdapter.getStatement(child);
-
-                  if (newStat == null) continue;
-
-                  createAddNode(newStat, newLayer);
+            // Determine theory membership and create nodes/edges
+            if (visited1.has(parent.id) && !visited2.has(parent.id)) {
+              if (!visited1.has(childId)) {
+                if (!visited2.has(childId)) {
+                  createAddNode(child, newLayer);
                 }
-                visited1.add(child);
+                visited1.add(childId);
               }
             }
-            else if (visited2.has(parent.id) && !visited1.has(parent.id)){
-              if (!visited2.has(child)){
-                if (!visited1.has(child)){
-                  const newStat = await this.backendAdapter.getStatement(child);
-                  if (newStat == null) continue;
-                  createAddNode(newStat, newLayer);
+            else if (visited2.has(parent.id) && !visited1.has(parent.id)) {
+              if (!visited2.has(childId)) {
+                if (!visited1.has(childId)) {
+                  createAddNode(child, newLayer);
                 }
-                visited2.add(child);
+                visited2.add(childId);
               }
             }
-            else{
-              if (!visited1.has(child) && !visited2.has(child)){
-                const newStat = await this.backendAdapter.getStatement(child);
-                if (newStat == null) continue;
-                createAddNode(newStat, newLayer);
+            else {
+              if (!visited1.has(childId) && !visited2.has(childId)) {
+                createAddNode(child, newLayer);
               }
-              visited1.add(child);
-              visited2.add(child);
+              visited1.add(childId);
+              visited2.add(childId);
             }
 
-            //Create edge from parent to child
+            // Create edge
             const newEdge = {
               data: {
-                id: parent.id + child,
+                id: parent.id + childId,
                 source: parent.id,
-                target: child
+                target: childId
               }
-            }
+            };
             edges.push(newEdge);
           }
         }
@@ -131,15 +132,15 @@ class GraphMaster {
         current = newLayer;
       }
 
-      //Update node styles
-      for (const node of nodes){
-        if (!visited1.has(node.data.id) && visited2.has(node.data.id)){
+      // Update node styles
+      for (const node of nodes) {
+        if (!visited1.has(node.data.id) && visited2.has(node.data.id)) {
           if (node.data.type == "a")
             node.classes = "2a";
           else if (node.data.type == "s")
             node.classes = "2s";
         }
-        else if (visited1.has(node.data.id) && !visited2.has(node.data.id)){
+        else if (visited1.has(node.data.id) && !visited2.has(node.data.id)) {
           if (node.data.type == "a")
             node.classes = "1a";
           else if (node.data.type == "s")
@@ -147,8 +148,7 @@ class GraphMaster {
         }
       }
 
-      this.graph = nodes + edges;
-
+      this.graph = nodes.concat(edges);
       return this.graph;
     }
 
@@ -323,5 +323,5 @@ class GraphMaster {
       return [];
     }
   }
-  
+
 export default GraphMaster
