@@ -4,6 +4,8 @@ class GraphMaster {
     constructor() {
       this.graph = [];
       this.backendAdapter = new BackendAdapter();
+
+      this.rootNodes = [];
     }
   
     async createGraph(settings) {
@@ -15,7 +17,6 @@ class GraphMaster {
       const edges = [];
       const visited1 = new Set();
       const visited2 = new Set();
-      const toFetch = new Set(); // Track all statements we need to fetch
 
       //Initialize
       let current = [];
@@ -43,12 +44,6 @@ class GraphMaster {
         if (!visited1.has(s.id)){
           visited1.add(s.id);
           current.push(s);
-          // Add referenced statements to fetch queue
-          s.referencedBy.forEach(child => {
-            if (!visited1.has(child) && !visited2.has(child)) {
-              toFetch.add(child);
-            }
-          });
         }
       });
 
@@ -56,12 +51,6 @@ class GraphMaster {
         if (!visited2.has(s.id)){
           visited2.add(s.id);
           current.push(s);
-          // Add referenced statements to fetch queue
-          s.referencedBy.forEach(child => {
-            if (!visited1.has(child) && !visited2.has(child)) {
-              toFetch.add(child);
-            }
-          });
         }
       });
 
@@ -76,15 +65,40 @@ class GraphMaster {
           classes: visited1.has(s.id) ? (s.type == "$a" ? "t1a" : "t1s") : (s.type == "$a" ? "t2a" : "t2s")
         };
         nodes.push(newNode);
+        this.rootNodes.push(newNode);
       });
 
-      // Fetch all needed statements in parallel
-      const fetchPromises = Array.from(toFetch).map(id => this.backendAdapter.getStatement(id));
-      const fetchedStatements = await Promise.all(fetchPromises);
-      const statementMap = new Map(fetchedStatements.map(s => [s.id, s]));
+      let toFetch = null;
+      let fetchPromises = null;
+      let fetchedStatements = null;
+      let statementMap = null;
 
+      async function fetchStatements(backendAdapter){
+        fetchPromises = Array.from(toFetch).map(id => backendAdapter.getStatement(id));
+        fetchedStatements = await Promise.all(fetchPromises);
+        statementMap = new Map(fetchedStatements.map(s => [s.id, s]));
+      }
+
+      function createEdge(parentId, childId){
+        const newEdge = {
+          data: {
+            id: parentId + childId,
+            source: parentId,
+            target: childId
+          }
+        };
+        edges.push(newEdge);
+      }
+      
       // Process fetched statements
-      for (let i = 0; i < 5 && current.length > 0; i++) {
+      for (let i = 0; i < 3 && current.length > 0; i++) {
+        console.log(current);
+
+        //Fetch all children
+        toFetch = new Set(current.map(s => s.referencedBy).flat());
+        await fetchStatements(this.backendAdapter);
+
+        //Create nodes
         let newLayer = [];
 
         for (const parent of current) {
@@ -99,6 +113,7 @@ class GraphMaster {
                   createAddNode(child, newLayer);
                 }
                 visited1.add(childId);
+                createEdge(parent.id, childId);
               }
             }
             else if (visited2.has(parent.id) && !visited1.has(parent.id)) {
@@ -107,6 +122,7 @@ class GraphMaster {
                   createAddNode(child, newLayer);
                 }
                 visited2.add(childId);
+                createEdge(parent.id, childId);
               }
             }
             else {
@@ -116,16 +132,6 @@ class GraphMaster {
               visited1.add(childId);
               visited2.add(childId);
             }
-
-            // Create edge
-            const newEdge = {
-              data: {
-                id: parent.id + childId,
-                source: parent.id,
-                target: childId
-              }
-            };
-            edges.push(newEdge);
           }
         }
 
@@ -148,6 +154,8 @@ class GraphMaster {
         }
       }
 
+      console.log("done");
+
       this.graph = nodes.concat(edges);
       return this.graph;
     }
@@ -158,6 +166,8 @@ class GraphMaster {
         return;
       }
   
+      console.log("drawing", this.graph);
+
       const cy = cytoscape({
         container: document.getElementById('cy'),
   
@@ -313,6 +323,14 @@ class GraphMaster {
           maxParallelEdgeSmoothing: 20
         }
       });
+
+      if (this.rootNodes.length > 0){
+        cy.fit(this.rootNodes, 50);
+        cy.zoom(1);
+      }
+      else{
+        console.warn("No root nodes to fit in the viewport!");
+      }
     }
   
     getInfo(id) {
