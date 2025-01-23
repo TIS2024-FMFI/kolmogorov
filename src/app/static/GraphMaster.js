@@ -94,7 +94,7 @@ class GraphMaster {
       for (let i = 0; i < settings.depth && current.length > 0; i++) {
 
         //Decide children based on settings and fetch
-        if (settings.type == "down"){
+        if (settings.type == "up"){
           toFetch = new Set(current.map(s => s.referencedBy).flat());
         }
         else{
@@ -110,7 +110,7 @@ class GraphMaster {
 
           //Decide children based on settings
           let children = parent.provedFrom;
-          if (settings.type == "down"){
+          if (settings.type == "up"){
             children = parent.referencedBy;
           }
 
@@ -323,7 +323,7 @@ class GraphMaster {
       });
 
       //Invert the graph according to settings
-      if (settings.type == "up"){
+      if (settings.type == "down"){
         cy.nodes().forEach(node => {
           const position = node.position();
           node.position({
