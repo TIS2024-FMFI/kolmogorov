@@ -6,6 +6,7 @@ class SettingsDown extends Settings {
       this.showAxioms = false; 
       this.showOnlyCommon = false; 
       this.shortestPossibleDistance = false; 
+      this.type = "down";
     }
   
     toggleShowAxioms() {

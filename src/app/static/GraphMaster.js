@@ -1,11 +1,12 @@
 import BackendAdapter from '../static/BackendAdapter.js';
 import TheoryHandler from './TheoryHandler.js';
+import SettingsUp from "./SettingsUp.js";
+import SettingsDown from "./SettingsDown.js";
 
 class GraphMaster {
     constructor() {
       this.graph = [];
       this.backendAdapter = new BackendAdapter();
-
       this.rootNodes = [];
     }
   
@@ -21,11 +22,6 @@ class GraphMaster {
       //Initialize
       let current = [];
 
-      const Theory = Object.freeze({
-        T1: 0,
-        T2: 1
-      });
-
       function createAddNode(stat, newLayer) {
         const newNode = {
           data: {
@@ -33,7 +29,7 @@ class GraphMaster {
             label: stat.id,
             type: stat.type == "$a" ? "a" : "s"
           },
-          classes: "node"
+          classes: stat.type == "$a" ? "a" : "s"
         };
         newLayer.push(stat);
         nodes.push(newNode);
@@ -53,6 +49,8 @@ class GraphMaster {
           current.push(s);
         }
       });
+
+      const theories = new Set(current.map(c => c.id));
 
       // Create initial nodes
       current.forEach(s => {
@@ -80,34 +78,50 @@ class GraphMaster {
       }
 
       function createEdge(parentId, childId){
-        const newEdge = {
-          data: {
-            id: parentId + childId,
-            source: parentId,
-            target: childId
-          }
-        };
-        edges.push(newEdge);
+        if (!theories.has(childId)){
+          const newEdge = {
+            data: {
+              id: parentId + childId,
+              source: parentId,
+              target: childId
+            }
+          };
+          edges.push(newEdge);
+        }
       }
       
-      // Process fetched statements
-      for (let i = 0; i < 3 && current.length > 0; i++) {
-        console.log(current);
+      // Create graph
+      for (let i = 0; i < settings.depth && current.length > 0; i++) {
 
-        //Fetch all children
-        toFetch = new Set(current.map(s => s.referencedBy).flat());
+        //Decide children based on settings and fetch
+        if (settings.type == "down"){
+          toFetch = new Set(current.map(s => s.referencedBy).flat());
+        }
+        else{
+          toFetch = new Set(current.map(s => s.provedFrom).flat());
+        }
+
         await fetchStatements(this.backendAdapter);
 
         //Create nodes
         let newLayer = [];
 
         for (const parent of current) {
-          for (const childId of parent.referencedBy) {
+
+          //Decide children based on settings
+          let children = parent.provedFrom;
+          if (settings.type == "down"){
+            children = parent.referencedBy;
+          }
+
+          for (const childId of children) {
             const child = statementMap.get(childId);
             if (!child) continue;
 
-            // Determine theory membership and create nodes/edges
+            //Parent exclusively from theory1
             if (visited1.has(parent.id) && !visited2.has(parent.id)) {
+
+              //Child not visited from theory1
               if (!visited1.has(childId)) {
                 if (!visited2.has(childId)) {
                   createAddNode(child, newLayer);
@@ -116,7 +130,10 @@ class GraphMaster {
                 createEdge(parent.id, childId);
               }
             }
+            //Parent exclusively from theory2
             else if (visited2.has(parent.id) && !visited1.has(parent.id)) {
+
+              //Child not visited from theory2
               if (!visited2.has(childId)) {
                 if (!visited1.has(childId)) {
                   createAddNode(child, newLayer);
@@ -125,12 +142,16 @@ class GraphMaster {
                 createEdge(parent.id, childId);
               }
             }
+            //Parent from both theories
             else {
+
+              //Child not visited at all
               if (!visited1.has(childId) && !visited2.has(childId)) {
                 createAddNode(child, newLayer);
               }
               visited1.add(childId);
               visited2.add(childId);
+              createEdge(parent.id, childId);
             }
           }
         }
@@ -154,20 +175,17 @@ class GraphMaster {
         }
       }
 
-      console.log("done");
-
+      console.log("Node count", nodes.length);
       this.graph = nodes.concat(edges);
       return this.graph;
     }
 
-    drawGraph(){
+    drawGraph(settings){
       if (!this.graph) {
         console.error('No graph to draw.');
         return;
       }
   
-      console.log("drawing", this.graph);
-
       const cy = cytoscape({
         container: document.getElementById('cy'),
   
@@ -179,8 +197,8 @@ class GraphMaster {
             style: {
               'background-color': '#0074D9',
               'label': 'data(label)',
-              'width': 50,
-              'height': 50,
+              'width': 80,
+              'height': 80,
               'text-halign': 'center',
               'text-valign': 'center',
               "shape": "ellipse"
@@ -192,8 +210,6 @@ class GraphMaster {
               'background-color': '#0e02f2',
               'border-width': 3,
               'border-color': '#C70039',
-              'width': '40px',
-              'height': '40px'
             }
           },
       
@@ -203,8 +219,6 @@ class GraphMaster {
               'background-color': '#0e02f2',
               'border-width': 3,
               'border-color': '#39C700',
-              'width': '40px',
-              'height': '40px',
               "shape": "square"
             }
           },
@@ -215,8 +229,6 @@ class GraphMaster {
               'background-color': '#fc0a0e',
               'border-width': 3,
               'border-color': '#0039C7',
-              'width': '40px',
-              'height': '40px'
             }
           },
       
@@ -226,8 +238,6 @@ class GraphMaster {
               'background-color': '#fc0a0e',
               'border-width': 3,
               'border-color': '#C70067',
-              'width': '40px',
-              'height': '40px',
               "shape": "square"
             }
           },
@@ -238,8 +248,6 @@ class GraphMaster {
               'background-color': '#00aaff',
               'border-width': 3,
               'border-color': '#C79A00',
-              'width': '40px',
-              'height': '40px'
             }
           },
       
@@ -249,8 +257,6 @@ class GraphMaster {
               'background-color': '#00aaff',
               'border-width': 3,
               'border-color': '#00A6C7',
-              'width': '40px',
-              'height': '40px',
               "shape": "square"
             }
           },
@@ -261,8 +267,6 @@ class GraphMaster {
               'background-color': '#fc586e',
               'border-width': 3,
               'border-color': '#C75F00',
-              'width': '40px',
-              'height': '40px'
             }
           },
       
@@ -272,8 +276,6 @@ class GraphMaster {
               'background-color': '#fc586e',
               'border-width': 3,
               'border-color': '#7A00C7',
-              'width': '40px',
-              'height': '40px',
               "shape": "square"
             }
           },
@@ -284,8 +286,6 @@ class GraphMaster {
               'background-color': '#7540e6',
               'border-width': 3,
               'border-color': '#C75F00',
-              'width': '40px',
-              'height': '40px'
             }
           },
       
@@ -295,8 +295,6 @@ class GraphMaster {
               'background-color': '#7540e6',
               'border-width': 3,
               'border-color': '#7A00C7',
-              'width': '40px',
-              'height': '40px',
               "shape": "square"
             }
           },
@@ -324,6 +322,20 @@ class GraphMaster {
         }
       });
 
+      //Invert the graph according to settings
+      if (settings.type == "up"){
+        cy.nodes().forEach(node => {
+          const position = node.position();
+          node.position({
+            x: position.x,
+            y: -position.y
+          });
+        });
+      }
+
+      console.log("settings ", settings);
+
+      //Center and zoom
       if (this.rootNodes.length > 0){
         cy.fit(this.rootNodes, 50);
         cy.zoom(1);

@@ -138,8 +138,8 @@
     document.getElementById('switchTypeButton').addEventListener('click', () => {
       isModeUp = !isModeUp; // Toggle mode
       modeText.textContent = isModeUp
-        ? "Statements supported by theory statements"
-        : "Statements supporting theory statements";
+        ? "Statements supporting theory statements"
+        : "Statements supported by theory statements";
       updateModeSpecificSettingsUI(); // Refresh settings for the current mode
     });
 
@@ -157,9 +157,6 @@
 
       settings.showAllEdges = document.getElementById('showAllEdges').checked;
       settings.showEquivalentTheorems = document.getElementById('showEquivalentTheorems').checked;
-
-      console.log('General Settings:', settings);
-      console.log('Mode-Specific Settings:', modeSpecific);
 
       // Create Settings
       let setts;
@@ -180,11 +177,9 @@
       setts.showAllEdges = settings.showAllEdges;
       setts.showEquivalentTheorems = settings.showEquivalentTheorems;
 
-      console.log('Final Settings:', setts);
-
       // Draw graph
-      await graphMaster.createGraph(settings);
-      graphMaster.drawGraph();
+      await graphMaster.createGraph(setts);
+      graphMaster.drawGraph(setts);
     });
   </script>
 </body>

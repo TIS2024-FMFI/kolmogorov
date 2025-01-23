@@ -5,7 +5,8 @@ class SettingsUp extends Settings {
       super(); 
       this.axiomsMustBeSpecified = false;
       this.showOnlyCommon = false; 
-      this.otherStartpoints = false; 
+      this.otherStartpoints = false;
+      this.type = "up";
     }
 
     toggleAxiomsMustBeSpecified() {
