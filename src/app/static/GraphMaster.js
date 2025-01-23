@@ -1,4 +1,5 @@
 import BackendAdapter from '../static/BackendAdapter.js';
+import TheoryHandler from './TheoryHandler.js';
 
 class GraphMaster {
     constructor() {
@@ -10,8 +11,7 @@ class GraphMaster {
   
     async createGraph(settings) {
       // Get initial statements
-      let statements1 = await Promise.all([this.backendAdapter.getStatement("ax-1")]);
-      let statements2 = await Promise.all([this.backendAdapter.getStatement("df-met")]);
+      const theoryHandler = new TheoryHandler();
 
       const nodes = [];
       const edges = [];
@@ -40,14 +40,14 @@ class GraphMaster {
       }
 
       // Add initial statements to visited sets
-      statements1.forEach(s => {
+      theoryHandler.theory1.forEach(s => {
         if (!visited1.has(s.id)){
           visited1.add(s.id);
           current.push(s);
         }
       });
 
-      statements2.forEach(s => {
+      theoryHandler.theory2.forEach(s => {
         if (!visited2.has(s.id)){
           visited2.add(s.id);
           current.push(s);
