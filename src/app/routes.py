@@ -20,7 +20,6 @@ def theory():
 def graph():
     return render_template('graph.html')
 
-
 def parse_database():
     """Endpoint to parse a Metamath database file."""
     if 'file' not in request.files:
@@ -49,7 +48,6 @@ def parse_database():
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
-
 def get_statement(label):
     """Endpoint to fetch a statement by label."""
     try:
@@ -69,7 +67,6 @@ def get_statement(label):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 def parse_set_mm():
     """Endpoint to parse the predefined set.mm file."""
     try:
@@ -83,5 +80,30 @@ def parse_set_mm():
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
-# Add this to create_app() in __init__.py
-app.add_url_rule('/parse_set_mm', 'parse_set_mm', parse_set_mm, methods=['POST'])
+def get_statements_batch():
+    """Endpoint to fetch multiple statements in one request."""
+    try:
+        data = request.get_json()
+        if not data or 'labels' not in data:
+            return jsonify({"error": "No labels provided"}), 400
+            
+        labels = data['labels']
+        if not isinstance(labels, list):
+            return jsonify({"error": "Labels must be a list"}), 400
+            
+        results = {}
+        for label in labels:
+            statement = data_handler.get_statement(label)
+            if not isinstance(statement, str):  # if not error message
+                results[label] = {
+                    "id": label,
+                    "description": statement.comment,
+                    "proof": statement.proof,
+                    "type": statement.tag,
+                    "referencedBy": list(statement.is_referenced_by),
+                    "provedFrom": statement.proved_from_statements
+                }
+                
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

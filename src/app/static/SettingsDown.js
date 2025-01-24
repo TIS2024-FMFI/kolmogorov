@@ -1,9 +1,12 @@
+import Settings from '../static/settings.js';
+
 class SettingsDown extends Settings {
     constructor() {
       super();
       this.showAxioms = false; 
       this.showOnlyCommon = false; 
       this.shortestPossibleDistance = false; 
+      this.type = "down";
     }
   
     toggleShowAxioms() {
@@ -18,3 +21,5 @@ class SettingsDown extends Settings {
       return this.shortestPossibleDistance;
     }
   }
+
+export default SettingsDown

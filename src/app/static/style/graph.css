@@ -34,3 +34,18 @@
         flex-grow: 1;
         padding: 10px;
       }
+
+      #cy-wrapper {
+        display: flex;
+        flex-grow: 1;
+        height: 100%; /* Inherit height from the parent */
+        width: 100%; /* Fill the container */
+      }
+      
+      #cy {
+        flex-grow: 1;
+        height: 100%; /* Full height */
+        width: 100%; /* Full width */
+        border: 1px solid #ccc; /* Optional for debugging */
+      }
+      
