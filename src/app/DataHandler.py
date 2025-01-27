@@ -1,109 +1,162 @@
 from .data import metamath as md
 import os
-from fuzzywuzzy import fuzz
+from fuzzywuzzy import fuzz # type: ignore
 
 class DataHandler:
     def __init__(self):
         self.db = None
+        self.search_index = {}  # Add search index
         
     def parse_database(self, fpath):
         try:
             self.db = md.parse(fpath)
+            self._build_search_index()  # Build index after parsing
             return "Database parsed successfully."
         except Exception as e:
             return f"Error: Failed to parse database: {str(e)}"
+        
+    def _build_search_index(self):
+        """Build search index for faster lookups"""
+        self.search_index = {}
+        
+        # Keywords that indicate important mathematical content
+        math_keywords = {'theorem', 'rule', 'law', 'formula', 'equation', 'lemma'}
+        
+        # Keywords that indicate helper/implementation statements
+        helper_keywords = {'inference', 'implementation', 'helper', 'internal', 'development'}
+        
+        for label, statement in self.db.statements.items():
+            description = statement.comment if hasattr(statement, 'comment') else ""
+            desc_lower = description.lower()
+            
+            # Calculate statement importance
+            importance = 1.0
+            
+            # Boost importance for statements with mathematical keywords
+            if any(keyword in desc_lower for keyword in math_keywords):
+                importance *= 2.0
+                
+            # Reduce importance for helper statements
+            if any(keyword in desc_lower for keyword in helper_keywords):
+                importance *= 0.3
+                
+            # Reduce importance for statements with implementation-related names
+            if any(x in label.lower() for x in ['impl', 'ii', 'lem', 'helper']):
+                importance *= 0.2
+                
+            # Boost importance for statements with Wikipedia references
+            if 'wikipedia' in desc_lower:
+                importance *= 1.5
+                
+            # Boost importance for statements with longer, meaningful descriptions
+            if len(description) > 100 and not description.startswith("This inference"):
+                importance *= 1.5
+                
+            self.search_index[label.lower()] = {
+                'label': label,
+                'description': description,
+                'importance': importance,
+                'tokens': set(label.lower().split() + desc_lower.split())
+            }
         
     def findStatements(self, prompt):
         if not self.db or not prompt:
             return []
         
         prompt = prompt.lower().strip()
+        prompt_tokens = set(prompt.split())
         matches = []
         
-        # Split prompt into words for multi-word matching
-        prompt_words = prompt.split()
+        # Common abbreviations and variations mapping
+        common_variations = {
+            'axiom': ['ax'],
+            'theorem': ['thm', 'th'],
+            'pythagorean': ['pythag', 'pyth'],
+            'equation': ['eq'],
+            'definition': ['def', 'dfn', 'df'],
+            'addition': ['add'],
+            'multiplication': ['mult', 'mul'],
+            'subtraction': ['sub'],
+            'division': ['div'],
+            'number': ['num'],
+            'square': ['sq'],
+            'mathematics': ['math'],
+            'function': ['func', 'fn'],
+            'property': ['prop'],
+            'example': ['ex'],
+            'sequence': ['seq'],
+            'polynomial': ['poly']
+        }
         
-        for label, statement in self.db.statements.items():
-            description = statement.comment if hasattr(statement, 'comment') else ""
-            score = 0
-            
-            # Fuzzy matching for label
-            label_ratio = fuzz.ratio(prompt, label.lower())
-            partial_label_ratio = fuzz.partial_ratio(prompt, label.lower())
-            
-            # Multi-word matching for label
-            label_word_scores = []
-            for word in prompt_words:
-                word_ratio = fuzz.partial_ratio(word, label.lower())
-                label_word_scores.append(word_ratio)
-            avg_word_score = sum(label_word_scores) / len(label_word_scores) if label_word_scores else 0
-            
-            # Fuzzy matching for description
-            desc_ratio = 0
-            partial_desc_ratio = 0
-            desc_word_scores = []
-            if description:
-                desc_ratio = fuzz.ratio(prompt, description.lower())
-                partial_desc_ratio = fuzz.partial_ratio(prompt, description.lower())
+        # Expand search tokens with variations
+        expanded_tokens = set(prompt_tokens)
+        for token in prompt_tokens:
+            # Add common abbreviations
+            for full, abbrevs in common_variations.items():
+                if token == full:
+                    expanded_tokens.update(abbrevs)
+                elif token in abbrevs:
+                    expanded_tokens.add(full)
                 
-                # Multi-word matching for description
-                for word in prompt_words:
-                    word_ratio = fuzz.partial_ratio(word, description.lower())
-                    desc_word_scores.append(word_ratio)
-            avg_desc_word_score = sum(desc_word_scores) / len(desc_word_scores) if desc_word_scores else 0
+        for indexed_data in self.search_index.values():
+            score = 0
+            label = indexed_data['label'].lower()
+            description = indexed_data['description'].lower()
+            importance = indexed_data['importance']
             
-            # Calculate total score
-            if label_ratio > 80:  # Almost exact match
-                score += 50
-            elif label_ratio > 60:  # Similar match
-                score += 30
-            elif partial_label_ratio > 80:  # Good partial match
-                score += 20
+            # Exact matches get highest priority
+            if prompt == label:
+                score = 1000
             
-            # Add multi-word match scores
-            if avg_word_score > 80:
-                score += 25
-            elif avg_word_score > 60:
-                score += 15
+            # ID/label matching with expanded tokens
+            label_tokens = set(label.split())
+            token_matches = expanded_tokens & label_tokens
+            if token_matches:
+                # More matches = higher score
+                score += len(token_matches) * 400
+                # Bonus for consecutive token matches
+                if any(all(token in label for token in consecutive_tokens) 
+                      for consecutive_tokens in zip(prompt_tokens, prompt_tokens[1:])):
+                    score += 200
             
-            # Add description match scores
-            if desc_ratio > 80:
-                score += 15
-            elif partial_desc_ratio > 80:
-                score += 10
+            # Main theorem/rule name matches
+            if any(f"{token} rule" in description or f"{token} theorem" in description 
+                    for token in expanded_tokens):
+                score += 800
+                
+            # Direct substring matches in label
+            if prompt in label:
+                score += 500
+                
+            # Token matching with position importance
+            for token in expanded_tokens:
+                if token in label:
+                    # Tokens at start of label are more important
+                    if label.startswith(token):
+                        score += 300
+                    else:
+                        score += 150
+                        
+                if token in description:
+                    # Tokens in first sentence are more important
+                    first_sentence = description.split('.')[0]
+                    if token in first_sentence:
+                        score += 200
+                    else:
+                        score += 50
             
-            # Add multi-word description match scores
-            if avg_desc_word_score > 80:
-                score += 10
-            elif avg_desc_word_score > 60:
-                score += 5
-            
-            # Add bonus for substring matches
-            if prompt in label.lower():
-                score += 15
-            if description and prompt in description.lower():
-                score += 5
+            # Apply importance multiplier
+            score *= importance
             
             if score > 0:
                 matches.append({
-                    'label': label,
+                    'label': indexed_data['label'],
                     'score': score,
-                    'description': description,
-                    'match_details': {
-                        'label_ratio': label_ratio,
-                        'partial_label_ratio': partial_label_ratio,
-                        'avg_word_score': avg_word_score,
-                        'desc_ratio': desc_ratio,
-                        'partial_desc_ratio': partial_desc_ratio,
-                        'avg_desc_word_score': avg_desc_word_score
-                    }
+                    'description': indexed_data['description']
                 })
         
-        # Sort by score in descending order
-        matches.sort(key=lambda x: x['score'], reverse=True)
-        
-        # Return top 5 matches
-        return matches[:10]
+        # Sort by score and return top 10
+        return sorted(matches, key=lambda x: x['score'], reverse=True)[:10]
         
     def get_statement(self, label):
         try:
