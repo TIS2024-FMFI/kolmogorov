@@ -20,3 +20,5 @@ class Settings {
       return this.showEquivalentTheorems;
     }
   }
+
+export default Settings
