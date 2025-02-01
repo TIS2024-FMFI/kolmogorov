@@ -197,19 +197,20 @@ class GraphMaster {
             style: {
               'background-color': '#0074D9',
               'label': 'data(label)',
-              'width': 80,
-              'height': 80,
+              'width': 100,
+              'height': 100,
               'text-halign': 'center',
               'text-valign': 'center',
-              "shape": "ellipse"
+              "shape": "ellipse",
+              "color": "#ffffff",
+              "text-outline-color": "#000000",
+              "text-outline-width": 2
             }
           },
           {
             selector: '.t1s',
             style: {
               'background-color': '#0e02f2',
-              'border-width': 3,
-              'border-color': '#C70039',
             }
           },
       
@@ -217,8 +218,6 @@ class GraphMaster {
             selector: '.t1a',
             style: {
               'background-color': '#0e02f2',
-              'border-width': 3,
-              'border-color': '#39C700',
               "shape": "square"
             }
           },
@@ -227,8 +226,6 @@ class GraphMaster {
             selector: '.t2s',
             style: {
               'background-color': '#fc0a0e',
-              'border-width': 3,
-              'border-color': '#0039C7',
             }
           },
       
@@ -236,8 +233,6 @@ class GraphMaster {
             selector: '.t2a',
             style: {
               'background-color': '#fc0a0e',
-              'border-width': 3,
-              'border-color': '#C70067',
               "shape": "square"
             }
           },
@@ -246,8 +241,6 @@ class GraphMaster {
             selector: '.1s',
             style: {
               'background-color': '#00aaff',
-              'border-width': 3,
-              'border-color': '#C79A00',
             }
           },
       
@@ -255,8 +248,6 @@ class GraphMaster {
             selector: '.1a',
             style: {
               'background-color': '#00aaff',
-              'border-width': 3,
-              'border-color': '#00A6C7',
               "shape": "square"
             }
           },
@@ -265,8 +256,6 @@ class GraphMaster {
             selector: '.2s',
             style: {
               'background-color': '#fc586e',
-              'border-width': 3,
-              'border-color': '#C75F00',
             }
           },
       
@@ -274,8 +263,6 @@ class GraphMaster {
             selector: '.2a',
             style: {
               'background-color': '#fc586e',
-              'border-width': 3,
-              'border-color': '#7A00C7',
               "shape": "square"
             }
           },
@@ -284,8 +271,6 @@ class GraphMaster {
             selector: '.s',
             style: {
               'background-color': '#7540e6',
-              'border-width': 3,
-              'border-color': '#C75F00',
             }
           },
       
@@ -293,8 +278,6 @@ class GraphMaster {
             selector: '.a',
             style: {
               'background-color': '#7540e6',
-              'border-width': 3,
-              'border-color': '#7A00C7',
               "shape": "square"
             }
           },
