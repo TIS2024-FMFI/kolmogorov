@@ -151,6 +151,8 @@
       let setts;
       if (isModeUp){
         setts = new SettingsUp();
+        const selectedOption = document.querySelector('input[name="upModeOption"]:checked');
+        setts.canBeProven = selectedOption && selectedOption.value === 'canBeProven';
       }
       else{
         setts = new SettingsDown();
