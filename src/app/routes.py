@@ -1,5 +1,5 @@
 from flask import render_template, Flask, request, jsonify # type: ignore
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename # type: ignore
 import os
 from .DataHandler import DataHandler
 
@@ -80,6 +80,23 @@ def parse_set_mm():
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
+# Add this to create_app() in __init__.py
+app.add_url_rule('/parse_set_mm', 'parse_set_mm', parse_set_mm, methods=['POST'])
+
+@app.route('/search/<query>')
+def search_statements(query):
+    try:
+        results = data_handler.findStatements(query)
+        return jsonify({
+            "success": True,
+            "results": results
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 def get_statements_batch():
     """Endpoint to fetch multiple statements in one request."""
     try:
@@ -107,3 +124,4 @@ def get_statements_batch():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+

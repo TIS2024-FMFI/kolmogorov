@@ -7,6 +7,7 @@ class TheoryApp {
         this.backendAdapter = new BackendAdapter();
         this.theoryHandler = new TheoryHandler();
         this.selectedTheory = 'theory-1';
+        this.searchTimeout = null;
         this.initializeElements();
         this.setupEventListeners();
         this.loadExistingTheories();
@@ -46,6 +47,33 @@ class TheoryApp {
         });
         this.elements.visualizeBtn.addEventListener('click', () => {
             window.location.href = '/graph';
+        });
+
+        const searchInput = document.getElementById('statement-input');
+        const suggestionsContainer = document.getElementById('search-suggestions');
+
+        // Search input handler
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(this.searchTimeout);
+            const query = e.target.value.trim();
+
+            // Hide suggestions if input is too short
+            if (query.length < 2) {
+                suggestionsContainer.style.display = 'none';
+                return;
+            }
+
+            // Debounce search requests
+            this.searchTimeout = setTimeout(() => {
+                this.performSearch(query);
+            }, 300);
+        });
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                suggestionsContainer.style.display = 'none';
+            }
         });
     }
 
@@ -195,6 +223,62 @@ class TheoryApp {
         statementEl.title = 'Double-click to remove';
 
         container.appendChild(statementEl);
+    }
+
+    async performSearch(query) {
+        const loadingSpinner = document.getElementById('search-loading');
+        try {
+            loadingSpinner.style.display = 'block';
+            const response = await fetch(`/search/${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.displaySuggestions(data.results);
+            }
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            loadingSpinner.style.display = 'none';
+        }
+    }
+
+    displaySuggestions(results) {
+        const suggestionsContainer = document.getElementById('search-suggestions');
+        
+        if (results.length === 0) {
+            suggestionsContainer.style.display = 'none';
+            return;
+        }
+
+        suggestionsContainer.innerHTML = results.map(result => `
+            <div class="suggestion-item" data-label="${result.label}">
+                <div class="suggestion-label">${result.label}</div>
+                <div class="suggestion-description">
+                    ${result.description ? result.description.substring(3) : 'No description available'}
+                </div>
+            </div>
+        `).join('');
+
+        suggestionsContainer.style.display = 'block';
+
+        // Add click handlers for suggestions
+        const suggestionItems = suggestionsContainer.getElementsByClassName('suggestion-item');
+        Array.from(suggestionItems).forEach(item => {
+            item.addEventListener('click', async () => {
+                const label = item.dataset.label;
+                document.getElementById('statement-input').value = label;
+                suggestionsContainer.style.display = 'none';
+                
+                // Automatically add the statement
+                try {
+                    const statement = await this.backendAdapter.getStatement(label);
+                    this.addStatementToTheory(statement);
+                    this.elements.statementInput.value = '';
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                }
+            });
+        });
     }
 }
 
