@@ -4,6 +4,7 @@ class SettingsDown extends Settings {
     constructor() {
       super();
       this.type = "down";
+      this.otherStartpoints = true;
     }
   }
 

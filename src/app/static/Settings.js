@@ -1,10 +1,7 @@
 class Settings {
     constructor() {
       this.depth = 0; 
-    }
-  
-    getDepth() {
-      return this.depth;
+      this.showAllEdges = false;
     }
   }
 
