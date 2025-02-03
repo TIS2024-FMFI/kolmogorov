@@ -119,6 +119,10 @@ class GraphMaster {
       for (let sid in rawGraph){
         let s = rawGraph[sid];
 
+        //Exclude axiom if set in settings
+        if (settings.type == "up" && settings.showAxioms == false && s.type == "a")
+          continue;
+
         this.graph.push({
           data: {
             id: sid,
@@ -128,13 +132,16 @@ class GraphMaster {
         });
 
         s.children.forEach(child => {
-          this.graph.push({
-            data: {
-              id: sid + child,
-              source: sid,
-              target: child
-            }
-          });
+          //Exclude axiom if set in settings
+          if (settings.type == "down" || settings.showAxioms == true || rawGraph[child].type == "s"){
+            this.graph.push({
+              data: {
+                id: sid + child,
+                source: sid,
+                target: child
+              }
+            });
+          }
         });
       }
 
