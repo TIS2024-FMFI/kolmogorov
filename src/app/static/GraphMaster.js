@@ -88,6 +88,28 @@ class GraphMaster {
         current = newLayer;
       }
 
+      //Check if show all edges and process
+      if (!settings.showAllEdges){
+        const used = new Set();
+        let layer = this.rootNodes.slice();
+
+        while (layer.length > 0){
+          let newLayer = [];
+
+          //Add new layer to used
+          layer.forEach(sid => used.add(sid));
+
+          //Remove all connections to used nodes
+          layer.forEach(sid => {
+            let stat = rawGraph[sid];
+            stat.children = stat.children.filter(id => !used.has(id));
+            newLayer = newLayer.concat(stat.children);
+          });
+
+          layer = newLayer;
+        }
+      }
+
       //Update theories
       const queue = new Queue();
       this.rootNodes.forEach(s => queue.enqueue(s));
