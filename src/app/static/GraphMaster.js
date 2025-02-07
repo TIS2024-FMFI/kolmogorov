@@ -1,8 +1,7 @@
 import BackendAdapter from '../static/BackendAdapter.js';
 import TheoryHandler from './TheoryHandler.js';
 import Queue from "../static/queue.js"
-import SettingsUp from "./SettingsUp.js";
-import SettingsDown from "./SettingsDown.js";
+
 
 class GraphMaster {
     constructor() {
@@ -77,6 +76,9 @@ class GraphMaster {
                   type: child.type == "$a" ? "a" : "s",
                   children: []
                 };
+
+                //If not use other startpoints, add proved from
+                rawGraph[childId].provedFrom = child.provedFrom;
               }
 
               //Create an edge from parent to child
@@ -86,6 +88,45 @@ class GraphMaster {
         });
 
         current = newLayer;
+      }
+
+      const removed = new Set();
+      //Check if other startpoints, if not -> remove unsuitable nodes and their children
+      if (settings.type == "down" && !settings.otherStartpoints){
+        const unsuitable = new Queue();
+        const roots = new Set(this.rootNodes);
+        const nodes = new Set(Object.keys(rawGraph));
+
+        //Find unsuitable
+        for (let sid in rawGraph){
+          //Continue if in theory
+          if (roots.has(sid))
+            continue;
+
+          if (!rawGraph[sid].provedFrom.every(s => nodes.has(s))){
+            if (sid == "a2i")
+              console.log("a21removed", rawGraph[sid].provedFrom);
+
+            unsuitable.enqueue(sid);
+          }
+        }
+
+        //Delete unsuitable and their children
+        while (!unsuitable.isEmpty()){
+          const toDelete = unsuitable.dequeue();
+
+          if (removed.has(toDelete))
+            continue;
+
+          rawGraph[toDelete].children.forEach(ch => {
+            if (!removed.has(ch)){
+              unsuitable.enqueue(ch);
+            }
+          });
+
+          removed.add(toDelete);
+          delete rawGraph[toDelete];
+        }
       }
 
       //Check if show all edges and process
@@ -101,9 +142,11 @@ class GraphMaster {
 
           //Remove all connections to used nodes
           layer.forEach(sid => {
-            let stat = rawGraph[sid];
-            stat.children = stat.children.filter(id => !used.has(id));
-            newLayer = newLayer.concat(stat.children);
+            if (!removed.has(sid)){
+              let stat = rawGraph[sid];
+              stat.children = stat.children.filter(id => !used.has(id));
+              newLayer = newLayer.concat(stat.children);
+            }
           });
 
           layer = newLayer;
@@ -115,18 +158,24 @@ class GraphMaster {
       this.rootNodes.forEach(s => queue.enqueue(s));
       while (!queue.isEmpty()){
         let current = queue.dequeue();
-        rawGraph[current].children.forEach(child => {
-          let childTheory = rawGraph[child].theory;
-          let parentTheory = rawGraph[current].theory;
 
-          if (childTheory != ""){
-            if (childTheory == null){
-              rawGraph[child].theory = parentTheory;
+        if (removed.has(current))
+          continue;
+
+        rawGraph[current].children.forEach(child => {
+          if (!removed.has(child)){
+            let childTheory = rawGraph[child].theory;
+            let parentTheory = rawGraph[current].theory;
+
+            if (childTheory != ""){
+              if (childTheory == null){
+                rawGraph[child].theory = parentTheory;
+              }
+              else if (childTheory != parentTheory){
+                rawGraph[child].theory = "";
+              } 
+              queue.enqueue(child);
             }
-            else if (childTheory != parentTheory){
-              rawGraph[child].theory = "";
-            } 
-            queue.enqueue(child);
           }
         });
       }
@@ -156,13 +205,15 @@ class GraphMaster {
         s.children.forEach(child => {
           //Exclude axiom if set in settings
           if (settings.type == "down" || settings.showAxioms == true || rawGraph[child].type == "s"){
-            this.graph.push({
-              data: {
-                id: sid + child,
-                source: sid,
-                target: child
-              }
-            });
+            if (!removed.has(child)){
+              this.graph.push({
+                data: {
+                  id: sid + child,
+                  source: sid,
+                  target: child
+                }
+              });
+            }
           }
         });
       }
