@@ -16,8 +16,8 @@
         
         <!-- General Settings -->
         <div>
-          <label for="graphDepth" class="form-label">Graph Depth (minimum 2):</label>
-          <input type="number" id="graphDepth" class="form-control mb-3" placeholder="Enter depth" min="2" value="2">
+          <label for="graphDepth" class="form-label">Graph Depth (minimum 1):</label>
+          <input type="number" id="graphDepth" class="form-control mb-3" placeholder="Enter depth" min="1" value="2">
         </div>
 
         <div>
@@ -115,7 +115,7 @@
     });
 
     document.getElementById('submitSettingsButton').addEventListener('click', async () => {
-      const depthValue = Math.max(2, parseInt(document.getElementById('graphDepth').value) || 2);
+      const depthValue = Math.max(1, parseInt(document.getElementById('graphDepth').value) || 1);
       const edgeDisplay = document.querySelector('input[name="edgeDisplay"]:checked').value;
       const settings = { depth: depthValue, showAllEdges: edgeDisplay === 'all' };
       let setts;
