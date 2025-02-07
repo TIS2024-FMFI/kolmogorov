@@ -25,7 +25,7 @@ class GraphMaster {
           rawGraph[s.id] = {
             theory: tag,
             type: s.type == "$a" ? "a" : "s",
-            children: []
+            children: new Set()
           };
         });
       }
@@ -74,7 +74,7 @@ class GraphMaster {
                 rawGraph[childId] = {
                   theory: null,
                   type: child.type == "$a" ? "a" : "s",
-                  children: []
+                  children: new Set()
                 };
 
                 //If not use other startpoints, add proved from
@@ -82,7 +82,7 @@ class GraphMaster {
               }
 
               //Create an edge from parent to child
-              rawGraph[parent.id].children.push(childId);
+              rawGraph[parent.id].children.add(childId);
             }    
           });
         });
@@ -93,63 +93,33 @@ class GraphMaster {
       const removed = new Set();
       //Check if other startpoints, if not -> remove unsuitable nodes and their children
       if (settings.type == "down" && !settings.otherStartpoints){
-        const unsuitable = new Queue();
         const roots = new Set(this.rootNodes);
-        const nodes = new Set(Object.keys(rawGraph));
 
-        //Find unsuitable
-        for (let sid in rawGraph){
-          //Continue if in theory
-          if (roots.has(sid))
-            continue;
+        let hasRemoved = true;
+        while (hasRemoved){
+          hasRemoved = false;
+          let unsuitable = [];
+          const nodes = new Set(Object.keys(rawGraph));
 
-          if (!rawGraph[sid].provedFrom.every(s => nodes.has(s))){
-            if (sid == "a2i")
-              console.log("a21removed", rawGraph[sid].provedFrom);
+          //Find unsuitable
+          for (let sid in rawGraph){
+            //Continue if in theory
+            if (roots.has(sid))
+              continue;
 
-            unsuitable.enqueue(sid);
+            if (!rawGraph[sid].provedFrom.every(s => nodes.has(s) && rawGraph[s].children.has(sid))){
+              unsuitable.push(sid);
+              hasRemoved = true;
+            }
           }
-        }
 
-        //Delete unsuitable and their children
-        while (!unsuitable.isEmpty()){
-          const toDelete = unsuitable.dequeue();
-
-          if (removed.has(toDelete))
-            continue;
-
-          rawGraph[toDelete].children.forEach(ch => {
-            if (!removed.has(ch)){
-              unsuitable.enqueue(ch);
+          //Delete unsuitable
+          unsuitable.forEach(s => {
+            if (!removed.has(s)){
+              removed.add(s);
+              delete rawGraph[s];
             }
           });
-
-          removed.add(toDelete);
-          delete rawGraph[toDelete];
-        }
-      }
-
-      //Check if show all edges and process
-      if (!settings.showAllEdges){
-        const used = new Set();
-        let layer = this.rootNodes.slice();
-
-        while (layer.length > 0){
-          let newLayer = [];
-
-          //Add new layer to used
-          layer.forEach(sid => used.add(sid));
-
-          //Remove all connections to used nodes
-          layer.forEach(sid => {
-            if (!removed.has(sid)){
-              let stat = rawGraph[sid];
-              stat.children = stat.children.filter(id => !used.has(id));
-              newLayer = newLayer.concat(stat.children);
-            }
-          });
-
-          layer = newLayer;
         }
       }
 
@@ -178,6 +148,30 @@ class GraphMaster {
             }
           }
         });
+      }
+
+      //Check if show all edges and process
+      if (!settings.showAllEdges){
+        const used = new Set();
+        let layer = this.rootNodes.slice();
+
+        while (layer.length > 0){
+          let newLayer = [];
+
+          //Add new layer to used
+          layer.forEach(sid => used.add(sid));
+
+          //Remove all connections to used nodes
+          layer.forEach(sid => {
+            if (!removed.has(sid)){
+              let stat = rawGraph[sid];
+              stat.children = new Set([...stat.children].filter(id => !used.has(id)));
+              newLayer = newLayer.concat([...stat.children]);
+            }
+          });
+
+          layer = newLayer;
+        }
       }
 
       //Update theories for root nodes
