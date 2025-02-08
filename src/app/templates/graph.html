@@ -30,6 +30,10 @@
             <input type="radio" id="showSubsequentEdges" name="edgeDisplay" class="form-check-input" value="subsequent">
             <label for="showSubsequentEdges" class="form-check-label">Show edges only between subsequent layers</label>
           </div>
+          <div class="form-check">
+            <input type="checkbox" id="showOnlyCommon" class="form-check-input">
+            <label for="showOnlyCommon" class="form-check-label">Show only common</label>
+          </div>
         </div>
 
         <!-- Mode-Specific Settings -->
@@ -115,11 +119,7 @@
     });
 
     document.getElementById('submitSettingsButton').addEventListener('click', async () => {
-      const depthValue = Math.max(1, parseInt(document.getElementById('graphDepth').value) || 1);
-      const edgeDisplay = document.querySelector('input[name="edgeDisplay"]:checked').value;
-      const settings = { depth: depthValue, showAllEdges: edgeDisplay === 'all' };
       let setts;
-
       if (isModeUp) {
         setts = new SettingsUp();
         setts.showAxioms = document.getElementById('showAxioms').checked;
@@ -127,8 +127,9 @@
         setts = new SettingsDown();
         setts.otherStartpoints = document.getElementById('otherStartpoints').checked;
       }
-      setts.depth = settings.depth;
-      setts.showAllEdges = settings.showAllEdges;
+      setts.depth = Math.max(1, parseInt(document.getElementById('graphDepth').value) || 1);
+      setts.showAllEdges = document.querySelector('input[name="edgeDisplay"]:checked').value === "all";
+      setts.showOnlyCommon = document.getElementById('showOnlyCommon').checked;
 
       await graphMaster.createGraph(setts);
       graphMaster.drawGraph(setts);

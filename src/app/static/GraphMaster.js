@@ -91,10 +91,10 @@ class GraphMaster {
       }
 
       const removed = new Set();
+      const roots = new Set(this.rootNodes);
+
       //Check if other startpoints, if not -> remove unsuitable nodes and their children
       if (settings.type == "down" && !settings.otherStartpoints){
-        const roots = new Set(this.rootNodes);
-
         let hasRemoved = true;
         while (hasRemoved){
           hasRemoved = false;
@@ -179,13 +179,46 @@ class GraphMaster {
         rawGraph[n].theory = "t" + rawGraph[n].theory;
       });
 
+      //Check if show only common and process
+      if (settings.showOnlyCommon){
+        let hasChanged = true;
+        while (hasChanged){
+          hasChanged = false;
+
+          this.rootNodes.forEach(parent => {
+            let unsuitable = new Set();
+            rawGraph[parent].children.forEach(child => {
+              if (!roots.has(child) && !removed.has(child) && rawGraph[child].theory != ""){
+                hasChanged = true;
+                rawGraph[child].children.forEach(c => {
+                  if (!removed.has(c)){
+                    rawGraph[parent].children.add(c);
+                  }
+                });
+                unsuitable.add(child)
+              }
+            });
+
+            //Remove children
+            unsuitable.forEach(u => {
+              rawGraph[parent].children.delete(u);
+
+              if (!removed.has(u)){
+                removed.add(u);
+                delete rawGraph[u];
+              }
+            });
+          });
+        }
+      }
+
       //Convert the graph
       this.graph = [];
       for (let sid in rawGraph){
         let s = rawGraph[sid];
 
         //Exclude axiom if set in settings
-        if (settings.type == "up" && settings.showAxioms == false && s.type == "a")
+        if (settings.type == "up" && settings.showAxioms == false && s.type == "a" && !roots.has(sid))
           continue;
 
         this.graph.push({
@@ -198,7 +231,7 @@ class GraphMaster {
 
         s.children.forEach(child => {
           //Exclude axiom if set in settings
-          if (settings.type == "down" || settings.showAxioms == true || rawGraph[child].type == "s"){
+          if (settings.type == "down" || settings.showAxioms == true || rawGraph[child].type == "s" || roots.has(child)){
             if (!removed.has(child)){
               this.graph.push({
                 data: {
