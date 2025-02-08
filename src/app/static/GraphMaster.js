@@ -150,30 +150,6 @@ class GraphMaster {
         });
       }
 
-      //Check if show all edges and process
-      if (!settings.showAllEdges){
-        const used = new Set();
-        let layer = this.rootNodes.slice();
-
-        while (layer.length > 0){
-          let newLayer = [];
-
-          //Add new layer to used
-          layer.forEach(sid => used.add(sid));
-
-          //Remove all connections to used nodes
-          layer.forEach(sid => {
-            if (!removed.has(sid)){
-              let stat = rawGraph[sid];
-              stat.children = new Set([...stat.children].filter(id => !used.has(id)));
-              newLayer = newLayer.concat([...stat.children]);
-            }
-          });
-
-          layer = newLayer;
-        }
-      }
-
       //Update theories for root nodes
       theoryHandler.theory1.forEach(t => {
         rawGraph[t.id].theory = "t1";
@@ -212,6 +188,30 @@ class GraphMaster {
               }
             });
           });
+        }
+      }
+
+      //Check if show all edges and process
+      if (!settings.showAllEdges){
+        const used = new Set();
+        let layer = this.rootNodes.slice();
+
+        while (layer.length > 0){
+          let newLayer = [];
+
+          //Add new layer to used
+          layer.forEach(sid => used.add(sid));
+
+          //Remove all connections to used nodes
+          layer.forEach(sid => {
+            if (!removed.has(sid)){
+              let stat = rawGraph[sid];
+              stat.children = new Set([...stat.children].filter(id => !used.has(id)));
+              newLayer = newLayer.concat([...stat.children]);
+            }
+          });
+
+          layer = newLayer;
         }
       }
 
