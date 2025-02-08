@@ -1,7 +1,7 @@
 import BackendAdapter from '../static/BackendAdapter.js';
 import TheoryHandler from './TheoryHandler.js';
-import SettingsUp from "./SettingsUp.js";
-import SettingsDown from "./SettingsDown.js";
+import Queue from "../static/queue.js"
+
 
 class GraphMaster {
     constructor() {
@@ -9,174 +9,245 @@ class GraphMaster {
       this.backendAdapter = new BackendAdapter();
       this.rootNodes = [];
     }
-  
-    async createGraph(settings) {
-      // Get initial statements
+
+    async createGraph(settings){
       const theoryHandler = new TheoryHandler();
+      const rawGraph = {};
 
-      const nodes = [];
-      const edges = [];
-      const visited1 = new Set();
-      const visited2 = new Set();
-
-      //Initialize
-      let current = [];
-
-      function createAddNode(stat, newLayer) {
-        const newNode = {
-          data: {
-            id: stat.id,
-            label: stat.id,
-            type: stat.type == "$a" ? "a" : "s"
-          },
-          classes: stat.type == "$a" ? "a" : "s"
-        };
-        newLayer.push(stat);
-        nodes.push(newNode);
-      }
-
-      // Add initial statements to visited sets
-      theoryHandler.theory1.forEach(s => {
-        if (!visited1.has(s.id)){
-          visited1.add(s.id);
-          current.push(s);
-        }
-      });
-
-      theoryHandler.theory2.forEach(s => {
-        if (!visited2.has(s.id)){
-          visited2.add(s.id);
-          current.push(s);
-        }
-      });
-
-      const theories = new Set(current.map(c => c.id));
-
-      // Create initial nodes
-      current.forEach(s => {
-        const newNode = {
-          data: {
-            id: s.id,
-            label: s.id,
-            type: visited1.has(s.id) ? "theory1" : "theory2"
-          },
-          classes: visited1.has(s.id) ? (s.type == "$a" ? "t1a" : "t1s") : (s.type == "$a" ? "t2a" : "t2s")
-        };
-        nodes.push(newNode);
-        this.rootNodes.push(newNode);
-      });
-
-      let toFetch = null;
-      let fetchPromises = null;
-      let fetchedStatements = null;
-      let statementMap = null;
-
-      async function fetchStatements(backendAdapter){
-        fetchPromises = Array.from(toFetch).map(id => backendAdapter.getStatement(id));
-        fetchedStatements = await Promise.all(fetchPromises);
-        statementMap = new Map(fetchedStatements.map(s => [s.id, s]));
-      }
-
-      function createEdge(parentId, childId){
-        if (!theories.has(childId)){
-          const newEdge = {
-            data: {
-              id: parentId + childId,
-              source: parentId,
-              target: childId
-            }
+      //Fetch initial statements
+      let current = theoryHandler.theory1.concat(theoryHandler.theory2);
+      this.rootNodes = current.map(s => s.id);
+      const visited = new Set(this.rootNodes);
+    
+      //Create initial nodes
+      function createTheory(theory, tag){
+        theory.forEach(s => {
+          rawGraph[s.id] = {
+            theory: tag,
+            type: s.type == "$a" ? "a" : "s",
+            children: new Set()
           };
-          edges.push(newEdge);
-        }
+        });
       }
-      
-      // Create graph
-      for (let i = 0; i < settings.depth && current.length > 0; i++) {
 
-        //Decide children based on settings and fetch
-        if (settings.type == "up"){
-          toFetch = new Set(current.map(s => s.referencedBy).flat());
+      createTheory(theoryHandler.theory1, "1");
+      createTheory(theoryHandler.theory2, "2");
+
+      //Statements fetching function
+      async function fetchStatements(backendAdapter, toFetch){
+        let fetchPromises = Array.from(toFetch).map(id => backendAdapter.getStatement(id));
+        let fetchedStatements = await Promise.all(fetchPromises);
+        return new Map(fetchedStatements.map(s => [s.id, s]));
+      }
+
+      //Create graph to a set depth
+      for (let i = 0; i < settings.depth && current.length > 0; i++){
+
+        //Choose children based on settings and fetch
+        let toFetch;
+        if (settings.type == "up"){ 
+          toFetch = new Set(current.map(s => s.provedFrom || []).flat()); 
         }
-        else{
-          toFetch = new Set(current.map(s => s.provedFrom).flat());
+        else{ 
+          toFetch = new Set(current.map(s => s.referencedBy || []).flat()); 
         }
+        const newStatements = await fetchStatements(this.backendAdapter, toFetch);
 
-        await fetchStatements(this.backendAdapter);
-
-        //Create nodes
-        let newLayer = [];
-
-        for (const parent of current) {
-
-          //Decide children based on settings
+        //Process new layer
+        const newLayer = [];
+        current.forEach(parent => {
+          //Choose children based on settings
           let children = parent.provedFrom;
-          if (settings.type == "up"){
+          if (settings.type == "down"){
             children = parent.referencedBy;
           }
 
-          for (const childId of children) {
-            const child = statementMap.get(childId);
-            if (!child) continue;
+          //Process each child
+          children.forEach(childId => {
+            const child = newStatements.get(childId);
+            if (child){
+              //Create and add to new layer if not visited
+              if (!visited.has(childId)){
+                newLayer.push(child);
+                visited.add(childId);
 
-            //Parent exclusively from theory1
-            if (visited1.has(parent.id) && !visited2.has(parent.id)) {
+                rawGraph[childId] = {
+                  theory: null,
+                  type: child.type == "$a" ? "a" : "s",
+                  children: new Set()
+                };
 
-              //Child not visited from theory1
-              if (!visited1.has(childId)) {
-                if (!visited2.has(childId)) {
-                  createAddNode(child, newLayer);
-                }
-                visited1.add(childId);
-                createEdge(parent.id, childId);
+                //If not use other startpoints, add proved from
+                rawGraph[childId].provedFrom = child.provedFrom;
               }
-            }
-            //Parent exclusively from theory2
-            else if (visited2.has(parent.id) && !visited1.has(parent.id)) {
 
-              //Child not visited from theory2
-              if (!visited2.has(childId)) {
-                if (!visited1.has(childId)) {
-                  createAddNode(child, newLayer);
-                }
-                visited2.add(childId);
-                createEdge(parent.id, childId);
-              }
-            }
-            //Parent from both theories
-            else {
-
-              //Child not visited at all
-              if (!visited1.has(childId) && !visited2.has(childId)) {
-                createAddNode(child, newLayer);
-              }
-              visited1.add(childId);
-              visited2.add(childId);
-              createEdge(parent.id, childId);
-            }
-          }
-        }
+              //Create an edge from parent to child
+              rawGraph[parent.id].children.add(childId);
+            }    
+          });
+        });
 
         current = newLayer;
       }
 
-      // Update node styles
-      for (const node of nodes) {
-        if (!visited1.has(node.data.id) && visited2.has(node.data.id)) {
-          if (node.data.type == "a")
-            node.classes = "2a";
-          else if (node.data.type == "s")
-            node.classes = "2s";
-        }
-        else if (visited1.has(node.data.id) && !visited2.has(node.data.id)) {
-          if (node.data.type == "a")
-            node.classes = "1a";
-          else if (node.data.type == "s")
-            node.classes = "1s";
+      const removed = new Set();
+      const roots = new Set(this.rootNodes);
+
+      //Check if other startpoints, if not -> remove unsuitable nodes and their children
+      if (settings.type == "down" && !settings.otherStartpoints){
+        let hasRemoved = true;
+        while (hasRemoved){
+          hasRemoved = false;
+          let unsuitable = [];
+          const nodes = new Set(Object.keys(rawGraph));
+
+          //Find unsuitable
+          for (let sid in rawGraph){
+            //Continue if in theory
+            if (roots.has(sid))
+              continue;
+
+            if (!rawGraph[sid].provedFrom.every(s => nodes.has(s) && rawGraph[s].children.has(sid))){
+              unsuitable.push(sid);
+              hasRemoved = true;
+            }
+          }
+
+          //Delete unsuitable
+          unsuitable.forEach(s => {
+            if (!removed.has(s)){
+              removed.add(s);
+              delete rawGraph[s];
+            }
+          });
         }
       }
 
-      console.log("Node count", nodes.length);
-      this.graph = nodes.concat(edges);
+      //Update theories
+      const queue = new Queue();
+      this.rootNodes.forEach(s => queue.enqueue(s));
+      while (!queue.isEmpty()){
+        let current = queue.dequeue();
+
+        if (removed.has(current))
+          continue;
+
+        rawGraph[current].children.forEach(child => {
+          if (!removed.has(child)){
+            let childTheory = rawGraph[child].theory;
+            let parentTheory = rawGraph[current].theory;
+
+            if (childTheory != ""){
+              if (childTheory == null){
+                rawGraph[child].theory = parentTheory;
+              }
+              else if (childTheory != parentTheory){
+                rawGraph[child].theory = "";
+              } 
+              queue.enqueue(child);
+            }
+          }
+        });
+      }
+
+      //Update theories for root nodes
+      theoryHandler.theory1.forEach(t => {
+        rawGraph[t.id].theory = "t1";
+      });
+      theoryHandler.theory2.forEach(t => {
+        rawGraph[t.id].theory = "t2";
+      });
+
+      //Check if show only common and process
+      if (settings.showOnlyCommon){
+        let hasChanged = true;
+        while (hasChanged){
+          hasChanged = false;
+
+          this.rootNodes.forEach(parent => {
+            let unsuitable = new Set();
+            rawGraph[parent].children.forEach(child => {
+              if (!roots.has(child) && !removed.has(child) && rawGraph[child].theory != ""){
+                hasChanged = true;
+                rawGraph[child].children.forEach(c => {
+                  if (!removed.has(c)){
+                    rawGraph[parent].children.add(c);
+                  }
+                });
+                unsuitable.add(child)
+              }
+            });
+
+            //Remove children
+            unsuitable.forEach(u => {
+              rawGraph[parent].children.delete(u);
+
+              if (!removed.has(u)){
+                removed.add(u);
+                delete rawGraph[u];
+              }
+            });
+          });
+        }
+      }
+
+      //Check if show all edges and process
+      if (!settings.showAllEdges){
+        const used = new Set();
+        let layer = this.rootNodes.slice();
+
+        while (layer.length > 0){
+          let newLayer = [];
+
+          //Add new layer to used
+          layer.forEach(sid => used.add(sid));
+
+          //Remove all connections to used nodes
+          layer.forEach(sid => {
+            if (!removed.has(sid)){
+              let stat = rawGraph[sid];
+              stat.children = new Set([...stat.children].filter(id => !used.has(id)));
+              newLayer = newLayer.concat([...stat.children]);
+            }
+          });
+
+          layer = newLayer;
+        }
+      }
+
+      //Convert the graph
+      this.graph = [];
+      for (let sid in rawGraph){
+        let s = rawGraph[sid];
+
+        //Exclude axiom if set in settings
+        if (settings.type == "up" && settings.showAxioms == false && s.type == "a" && !roots.has(sid))
+          continue;
+
+        this.graph.push({
+          data: {
+            id: sid,
+            label: sid
+          },
+          classes: s.theory + s.type
+        });
+
+        s.children.forEach(child => {
+          //Exclude axiom if set in settings
+          if (settings.type == "down" || settings.showAxioms == true || rawGraph[child].type == "s" || roots.has(child)){
+            if (!removed.has(child)){
+              this.graph.push({
+                data: {
+                  id: sid + child,
+                  source: sid,
+                  target: child
+                }
+              });
+            }
+          }
+        });
+      }
+
       return this.graph;
     }
 
@@ -306,7 +377,7 @@ class GraphMaster {
       });
 
       //Invert the graph according to settings
-      if (settings.type == "down"){
+      if (settings.type == "up"){
         cy.nodes().forEach(node => {
           const position = node.position();
           node.position({
@@ -315,8 +386,6 @@ class GraphMaster {
           });
         });
       }
-
-      console.log("settings ", settings);
 
       //Center and zoom
       if (this.rootNodes.length > 0){
