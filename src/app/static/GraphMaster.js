@@ -175,8 +175,11 @@ class GraphMaster {
       }
 
       //Update theories for root nodes
-      this.rootNodes.forEach(n => {
-        rawGraph[n].theory = "t" + rawGraph[n].theory;
+      theoryHandler.theory1.forEach(t => {
+        rawGraph[t.id].theory = "t1";
+      });
+      theoryHandler.theory2.forEach(t => {
+        rawGraph[t.id].theory = "t2";
       });
 
       //Check if show only common and process
