@@ -247,6 +247,10 @@ class GraphMaster {
           }
         });
       }
+      // store for intersection count
+      this.nodes = nodes;
+      this.visited1 = visited1;
+      this.visited2 = visited2;
 
       return this.graph;
     }
@@ -395,7 +399,101 @@ class GraphMaster {
       else{
         console.warn("No root nodes to fit in the viewport!");
       }
+
+      //onclick part
+      let bubble = document.getElementById('thought-bubble');
+      if (!bubble) {
+        bubble = document.createElement('div');
+        bubble.id = 'thought-bubble';
+        document.body.appendChild(bubble);
+      }
+
+      let closeButton = document.createElement('button');
+      closeButton.innerHTML = 'X';
+
+      closeButton.onclick = function () {
+          bubble.style.display = 'none';
+      };
+      bubble.appendChild(closeButton);
+
+      cy.on('tap', 'node', async function(evt) {
+        const node = evt.target;
+        const pos = node.renderedPosition();
+        
+        const backendAdapter = new BackendAdapter(); 
+        try {
+            const statement = await backendAdapter.getStatement(node.id());
+            const provedFromDetails = await Promise.all(
+                statement.provedFrom.map(async (id) => {
+                    try {
+                        return await backendAdapter.getStatement(id);
+                    } catch (err) {
+                        console.error(`Error fetching statement ${id}:`, err);
+                        return null;
+                    }
+                })
+            );
+            const validProvedFrom = provedFromDetails.filter(item => item !== null);
+
+            const axioms = validProvedFrom.filter(item => item.id.startsWith("ax-"));
+            const definitions = validProvedFrom.filter(item => item.id.startsWith("df-")); 
+            bubble.innerHTML = `<strong>Node ID:</strong> ${statement.id}<br>
+                                <strong>Node definition:</strong> ${statement.description}<br>
+                                <strong>This theorem was proved from ${axioms.length} Axioms: </strong> ${axioms.map(a => a.id).join(', ') || ''}<br>
+                                <strong>This theorem was proved from ${definitions.length} Definitions: </strong> ${definitions.map(d => d.id).join(', ') || ''} <br>
+                                <strong>This theorem was referenced by ${statement.referencedBy.length} Theorems: </strong> ${statement.referencedBy}`;
+                                
+    
+        } catch (error) {
+            bubble.innerHTML = `<strong>Error:</strong> Could not fetch statement info.`;
+            console.error(error);
+        }
+    
+        bubble.appendChild(closeButton);
+        bubble.style.left = `${pos.x + 15}px`;
+        bubble.style.top = `${pos.y + 15}px`;
+        bubble.style.display = 'block';
+      });
+    
+
+      document.addEventListener('click', (event) => {
+        if (!event.target.closest('#thought-bubble')) {
+          bubble.style.display = 'block';
+        }
+      });
+
+
+      //intersection bottom box
+      let intersectionBox = document.getElementById('intersection-box');
+      let interTheorems = 0;
+      let interAxioms = 0;
+      let interDefinitions = 0;
+      let intersectionDetails = [];
+      let a = []
+
+      for (const node of this.nodes) {
+        if (this.visited1.has(node.data.id) && this.visited2.has(node.data.id)) {      
+          if (node.data.id.startsWith("ax-")) {
+            interAxioms++;
+          } else if (node.data.id.startsWith("df-")) {
+            interDefinitions++;
+          } else {
+            interTheorems++;
+          }
+          intersectionDetails.push(node.data.id);
+        }
+      }
+
+      if (!intersectionBox) {
+        intersectionBox = document.createElement('div');
+        intersectionBox.id = 'intersection-box';
+        intersectionBox.innerHTML = `<strong>number of intersections:</strong><br>
+                            theorems: ${interTheorems}<br>
+                            axioms: ${interAxioms}<br>
+                            definitions: ${interDefinitions}`; 
+        document.body.appendChild(intersectionBox);
     }
+  }
   
     getInfo(id) {
       return {};
@@ -405,5 +503,6 @@ class GraphMaster {
       return [];
     }
   }
+
 
 export default GraphMaster
