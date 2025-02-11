@@ -217,6 +217,7 @@ class GraphMaster {
 
       //Convert the graph
       this.graph = [];
+      let edges = [];
       for (let sid in rawGraph){
         let s = rawGraph[sid];
 
@@ -236,7 +237,7 @@ class GraphMaster {
           //Exclude axiom if set in settings
           if (settings.type == "down" || settings.showAxioms == true || rawGraph[child].type == "s" || roots.has(child)){
             if (!removed.has(child)){
-              this.graph.push({
+              edges.push({
                 data: {
                   id: sid + child,
                   source: sid,
@@ -248,6 +249,7 @@ class GraphMaster {
         });
       }
 
+      this.graph = this.graph.concat(edges);
       return this.graph;
     }
 
