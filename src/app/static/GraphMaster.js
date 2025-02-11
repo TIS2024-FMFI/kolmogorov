@@ -8,6 +8,7 @@ class GraphMaster {
       this.graph = [];
       this.backendAdapter = new BackendAdapter();
       this.rootNodes = [];
+      this.theoryHandler = new TheoryHandler();
     }
 
     async createGraph(settings){
@@ -399,6 +400,7 @@ class GraphMaster {
       else{
         console.warn("No root nodes to fit in the viewport!");
       }
+<<<<<<< Updated upstream
 
       //onclick part
       let bubble = document.getElementById('thought-bubble');
@@ -492,6 +494,93 @@ class GraphMaster {
                             axioms: ${interAxioms}<br>
                             definitions: ${interDefinitions}`; 
         document.body.appendChild(intersectionBox);
+=======
+      
+      // node info 
+      let bubble = document.getElementById('thought-bubble');
+        if (!bubble) {
+            bubble = document.createElement('div');
+            bubble.id = 'thought-bubble';
+            document.body.appendChild(bubble);
+        }
+
+        //close button
+        let closeButton = document.createElement('button');
+        closeButton.innerHTML = 'X';
+        closeButton.onclick = () => bubble.style.display = 'none';
+        bubble.appendChild(closeButton);
+
+        // on tap node info
+        cy.on('tap', 'node', async (evt) => {
+            const node = evt.target;
+            const pos = node.renderedPosition();
+            try {
+                const statement = await this.backendAdapter.getStatement(node.id());
+                const provedFromDetails = await Promise.all(
+                    statement.provedFrom.map(async (id) => {
+                        try {
+                            return await this.backendAdapter.getStatement(id);
+                        } catch (err) {
+                            console.error(`Error fetching statement ${id}:`, err);
+                            return null;
+                        }
+                    })
+                )
+                const referencedByDetails = await Promise.all(
+                  statement.referencedBy.map(async (id) => {
+                      try {
+                          return await this.backendAdapter.getStatement(id);
+                      } catch (err) {
+                          console.error(`Error fetching statement ${id}:`, err);
+                          return null;
+                      }
+                  })
+              );;
+                const validProvedFrom = provedFromDetails.filter(item => item !== null);
+                const validReferencedBy = referencedByDetails.filter(item => item !== null);
+
+                const axioms = validProvedFrom.filter(item => item.id.startsWith("ax-"));
+                const definitions = validProvedFrom.filter(item => item.id.startsWith("df-"));
+                bubble.innerHTML = `<strong>Node ID:</strong> ${statement.id}<br>
+                                    <strong>Node definition:</strong> ${statement.description}<br>
+                                    <strong>Axioms:</strong> ${axioms.map(a => a.id).join(', ') || ''}<br>
+                                    <strong>Definitions:</strong> ${definitions.map(d => d.id).join(', ') || ''}<br>
+                                    <strong>Referenced by:</strong> ${validReferencedBy.map(r => r.id).join(', ') || ''}`
+            } catch (error) {
+                bubble.innerHTML = `<strong>Error:</strong> Could not fetch statement info.`;
+                console.error(error);
+            }
+
+            bubble.appendChild(closeButton);
+            bubble.style.left = `${pos.x + 15}px`;
+            bubble.style.top = `${pos.y + 15}px`;
+            bubble.style.display = 'block';
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('#thought-bubble')) {
+                bubble.style.display = 'none';
+            }
+        });
+
+        // intersection box
+        let intersectionBox = document.getElementById('intersection-box');
+
+        if (!intersectionBox) {
+          intersectionBox = document.createElement('div');
+          intersectionBox.id = 'intersection-box';
+          document.body.appendChild(intersectionBox);
+        }
+        
+        const { theory1, theory2 } = this.theoryHandler.getTheories();
+        const intersectionData = this.calculateIntersection(theory1, theory2);
+        
+        intersectionBox.innerHTML = `<strong>Number of Intersections:</strong><br>
+                                     Theorems: ${intersectionData.interTheorems}<br>
+                                     Axioms: ${intersectionData.interAxioms}<br>
+                                     Definitions: ${intersectionData.interDefinitions}`;
+        intersectionBox.style.display = "block";
+>>>>>>> Stashed changes
     }
   }
   
@@ -500,9 +589,28 @@ class GraphMaster {
     }
   
     calculateIntersection(theory1, theory2) {
-      return [];
-    }
+      let interTheorems = 0, interAxioms = 0, interDefinitions = 0;
+    
+      const theory1Ids = new Set(theory1.map(s => s.id));
+      const theory2Ids = new Set(theory2.map(s => s.id));
+      const commonIds = [...theory1Ids].filter(id => theory2Ids.has(id));
+      for (node in commonIds) {
+        if (node.startsWith("ax-")) {
+          interAxioms++;
+        } else if (node.startsWith("df-")) {
+          interDefinitions++;
+        } else {
+          interTheorems++;
+        }
+      }
+      return {interAxioms, interDefinitions, interTheorems, commonIds};
+      }
+        
   }
+<<<<<<< Updated upstream
 
 
 export default GraphMaster
+=======
+export default GraphMaster
+>>>>>>> Stashed changes
