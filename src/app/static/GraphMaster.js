@@ -400,7 +400,6 @@ class GraphMaster {
       else{
         console.warn("No root nodes to fit in the viewport!");
       }
-<<<<<<< Updated upstream
 
       //onclick part
       let bubble = document.getElementById('thought-bubble');
@@ -494,7 +493,6 @@ class GraphMaster {
                             axioms: ${interAxioms}<br>
                             definitions: ${interDefinitions}`; 
         document.body.appendChild(intersectionBox);
-=======
       
       // node info 
       let bubble = document.getElementById('thought-bubble');
@@ -580,7 +578,6 @@ class GraphMaster {
                                      Axioms: ${intersectionData.interAxioms}<br>
                                      Definitions: ${intersectionData.interDefinitions}`;
         intersectionBox.style.display = "block";
->>>>>>> Stashed changes
     }
   }
   
@@ -607,10 +604,6 @@ class GraphMaster {
       }
         
   }
-<<<<<<< Updated upstream
 
 
 export default GraphMaster
-=======
-export default GraphMaster
->>>>>>> Stashed changes
