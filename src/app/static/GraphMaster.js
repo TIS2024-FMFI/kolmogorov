@@ -9,6 +9,7 @@ class GraphMaster {
       this.backendAdapter = new BackendAdapter();
       this.rootNodes = [];
       this.theoryHandler = new TheoryHandler();
+      this.nodesInBothTheories = []; //for intersectuin count
     }
 
     async createGraph(settings){
@@ -144,6 +145,8 @@ class GraphMaster {
               }
               else if (childTheory != parentTheory){
                 rawGraph[child].theory = "";
+                this.nodesInBothTheories.push(child);
+                
               } 
               queue.enqueue(child);
             }
@@ -463,47 +466,12 @@ class GraphMaster {
                 bubble.style.display = 'none';
             }
         });
-
-        // intersection box
-        let intersectionBox = document.getElementById('intersection-box');
-
-        if (!intersectionBox) {
-          intersectionBox = document.createElement('div');
-          intersectionBox.id = 'intersection-box';
-          document.body.appendChild(intersectionBox);
-        }
-        
-        const { theory1, theory2 } = this.theoryHandler.getTheories();
-        const intersectionData = this.calculateIntersection(theory1, theory2);
-        
-        intersectionBox.innerHTML = `<strong>Number of Intersections:</strong><br>
-                                     Theorems: ${intersectionData.interTheorems}<br>
-                                     Axioms: ${intersectionData.interAxioms}<br>
-                                     Definitions: ${intersectionData.interDefinitions}`;
-        intersectionBox.style.display = "block";
     }
   
     getInfo(id) {
       return {};
     }
-  
-    calculateIntersection(theory1, theory2) {
-      let interTheorems = 0, interAxioms = 0, interDefinitions = 0;
-    
-      const theory1Ids = new Set(theory1.map(s => s.id));
-      const theory2Ids = new Set(theory2.map(s => s.id));
-      const commonIds = [...theory1Ids].filter(id => theory2Ids.has(id));
-      for (node in commonIds) {
-        if (node.startsWith("ax-")) {
-          interAxioms++;
-        } else if (node.startsWith("df-")) {
-          interDefinitions++;
-        } else {
-          interTheorems++;
-        }
-      }
-      return {interAxioms, interDefinitions, interTheorems, commonIds};
-      }
+
         
   }
 export default GraphMaster
