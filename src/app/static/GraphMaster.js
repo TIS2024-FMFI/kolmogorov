@@ -8,8 +8,6 @@ class GraphMaster {
       this.graph = [];
       this.backendAdapter = new BackendAdapter();
       this.rootNodes = [];
-      this.theoryHandler = new TheoryHandler();
-      this.nodesInBothTheories = []; //for intersectuin count
     }
 
     async createGraph(settings){
@@ -144,9 +142,7 @@ class GraphMaster {
                 rawGraph[child].theory = parentTheory;
               }
               else if (childTheory != parentTheory){
-                rawGraph[child].theory = "";
-                this.nodesInBothTheories.push(child);
-                
+                rawGraph[child].theory = "";                
               } 
               queue.enqueue(child);
             }
