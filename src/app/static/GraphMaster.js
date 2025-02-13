@@ -142,7 +142,7 @@ class GraphMaster {
                 rawGraph[child].theory = parentTheory;
               }
               else if (childTheory != parentTheory){
-                rawGraph[child].theory = "";
+                rawGraph[child].theory = "";                
               } 
               queue.enqueue(child);
             }
@@ -397,15 +397,79 @@ class GraphMaster {
       else{
         console.warn("No root nodes to fit in the viewport!");
       }
+      
+      // node info 
+      let bubble = document.getElementById('thought-bubble');
+        if (!bubble) {
+            bubble = document.createElement('div');
+            bubble.id = 'thought-bubble';
+            document.body.appendChild(bubble);
+        }
+
+        //close button
+        let closeButton = document.createElement('button');
+        closeButton.innerHTML = 'X';
+        closeButton.onclick = () => bubble.style.display = 'none';
+        bubble.appendChild(closeButton);
+
+        // on tap node info
+        cy.on('tap', 'node', async (evt) => {
+            const node = evt.target;
+            const pos = node.renderedPosition();
+            try {
+                const statement = await this.backendAdapter.getStatement(node.id());
+                const provedFromDetails = await Promise.all(
+                    statement.provedFrom.map(async (id) => {
+                        try {
+                            return await this.backendAdapter.getStatement(id);
+                        } catch (err) {
+                            console.error(`Error fetching statement ${id}:`, err);
+                            return null;
+                        }
+                    })
+                )
+                const referencedByDetails = await Promise.all(
+                  statement.referencedBy.map(async (id) => {
+                      try {
+                          return await this.backendAdapter.getStatement(id);
+                      } catch (err) {
+                          console.error(`Error fetching statement ${id}:`, err);
+                          return null;
+                      }
+                  })
+              );;
+                const validProvedFrom = provedFromDetails.filter(item => item !== null);
+                const validReferencedBy = referencedByDetails.filter(item => item !== null);
+
+                const axioms = validProvedFrom.filter(item => item.id.startsWith("ax-"));
+                const definitions = validProvedFrom.filter(item => item.id.startsWith("df-"));
+                bubble.innerHTML = `<strong>Node ID:</strong> ${statement.id}<br>
+                                    <strong>Node definition:</strong> ${statement.description}<br>
+                                    <strong>Axioms:</strong> ${axioms.map(a => a.id).join(', ') || ''}<br>
+                                    <strong>Definitions:</strong> ${definitions.map(d => d.id).join(', ') || ''}<br>
+                                    <strong>Referenced by:</strong> ${validReferencedBy.map(r => r.id).join(', ') || ''}`
+            } catch (error) {
+                bubble.innerHTML = `<strong>Error:</strong> Could not fetch statement info.`;
+                console.error(error);
+            }
+
+            bubble.appendChild(closeButton);
+            bubble.style.left = `${pos.x + 15}px`;
+            bubble.style.top = `${pos.y + 15}px`;
+            bubble.style.display = 'block';
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('#thought-bubble')) {
+                bubble.style.display = 'none';
+            }
+        });
     }
   
     getInfo(id) {
       return {};
     }
-  
-    calculateIntersection(theory1, theory2) {
-      return [];
-    }
-  }
 
+        
+  }
 export default GraphMaster
