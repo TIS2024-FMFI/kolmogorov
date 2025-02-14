@@ -105,15 +105,15 @@ class GraphApp {
     });
     
         //importExport 
-            const exportGraphBtn = document.getElementById('export-graph-btn');
+            const exportStatementsBtn = document.getElementById('export-statements-btn');
             const exportJpgBtn = document.getElementById('export-jpg-btn');
-            const exportTextBtn = document.getElementById('export-text-btn');
+            const exportGraphBtn = document.getElementById('export-graph-btn');
             const manager = new ImportExportManager(this.theoryHandler.theory1, this.theoryHandler.theory2)
             // Funkcia, ktorá sa vykoná po kliknutí na tlačidlo
             async function handleExportClick(event) {
               const clickedButton = event.target.id;
-              if (clickedButton === 'export-graph-btn') {
-                manager.exportGraph();
+              if (clickedButton === 'export-statements-btn') {
+                manager.exportStatements();
               } else if (clickedButton === 'export-jpg-btn') {
                 if(!graphMaster.cy){
                   let setts = createGraphWithSettings();
@@ -121,15 +121,15 @@ class GraphApp {
                   graphMaster.drawGraph(setts);
                 }
                 manager.exportJPG(graphMaster.cy);
-              } else if (clickedButton === 'export-text-btn') {
+              } else if (clickedButton === 'export-graph-btn') {
                 let setts = createGraphWithSettings();
                 await graphMaster.createGraph(setts);
-                manager.exportTEXT(graphMaster.graph);
+                manager.exportGraph(graphMaster.graph);
               }
             }
-            exportGraphBtn.addEventListener('click', handleExportClick);
+            exportStatementsBtn.addEventListener('click', handleExportClick);
             exportJpgBtn.addEventListener('click', handleExportClick);
-            exportTextBtn.addEventListener('click', handleExportClick);
+            exportGraphBtn.addEventListener('click', handleExportClick);
     }
 
 

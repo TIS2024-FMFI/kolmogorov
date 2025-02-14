@@ -412,7 +412,7 @@ class GraphMaster {
         bubble.appendChild(closeButton);
 
         // on tap node info
-        cy.on('tap', 'node', async (evt) => {
+        this.cy.on('tap', 'node', async (evt) => {
             const node = evt.target;
             const pos = node.renderedPosition();
             try {
