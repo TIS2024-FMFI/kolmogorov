@@ -1,6 +1,7 @@
 import { BackendAdapter } from './BackendAdapter.js';
 import Statement from './Statement.js';
 import TheoryHandler from './TheoryHandler.js';
+import ImportExportManager from './ImportExportmanager.js';
 
 class TheoryApp {
     constructor() {
@@ -75,6 +76,45 @@ class TheoryApp {
                 suggestionsContainer.style.display = 'none';
             }
         });
+
+        // Import hendler ...................................................................................................
+        
+            const importBtn = document.getElementById("import-btn");
+            const fileInput = document.getElementById("import-file");
+          
+            importBtn.addEventListener("click", () => {
+              // Aktivuje input na výber súboru
+              fileInput.click();
+            });
+          
+            fileInput.addEventListener("change", async () => {  // Pridaj async
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    console.log("Selected file:", file);
+            
+                    const manager = new ImportExportManager(this.theoryHandler.theory1, this.theoryHandler.theory2);
+            
+                    try {
+                        await manager.importTheory(file);  // Počká, kým sa import dokončí
+            
+                        this.theoryHandler.clearTheories();
+                        this.theoryHandler.theory1 = manager.theory1;
+                        this.theoryHandler.theory2 = manager.theory2;
+                        this.theoryHandler.saveTheories();
+            
+                        console.log("manager.theory1:", manager.theory1);
+                        console.log("manager.theory2:", manager.theory2);
+            
+                        // Presmerovanie až po dokončení importu
+                         window.location.href = '/graph';
+                    } catch (error) {
+                        console.error("Import failed:", error);
+                    }
+                } else {
+                    console.log("No file selected.");
+                }
+            });
+          
     }
 
     selectTheory(theoryId) {

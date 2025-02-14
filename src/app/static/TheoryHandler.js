@@ -2,6 +2,9 @@ class TheoryHandler {
     constructor() {
         this.theory1 = [];
         this.theory2 = [];
+        //IN CASE OF GETTING ERROR FROM BAD MANIPULATION WITH IMPORT BUTTON UNCOMMENT THIS CODE
+        //this.clearTheories();
+        //this.saveTheories();
         this.loadTheories(); // Load theories when instantiated
     }
 
@@ -35,9 +38,10 @@ class TheoryHandler {
         try {
             const theory1Data = localStorage.getItem('theory1');
             const theory2Data = localStorage.getItem('theory2');
-            
-            this.theory1 = theory1Data ? JSON.parse(theory1Data) : [];
-            this.theory2 = theory2Data ? JSON.parse(theory2Data) : [];
+            if(theory1Data != null || theory2Data != null){
+                this.theory1 = theory1Data ? JSON.parse(theory1Data) : [];
+                this.theory2 = theory2Data ? JSON.parse(theory2Data) : [];
+            }
         } catch (error) {
             console.error('Error loading theories:', error);
             this.theory1 = [];

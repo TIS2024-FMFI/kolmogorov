@@ -256,8 +256,8 @@ class GraphMaster {
         console.error('No graph to draw.');
         return;
       }
-  
-      const cy = cytoscape({
+      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      this.cy = cytoscape({
         container: document.getElementById('cy'),
   
         elements: this.graph,
@@ -378,7 +378,7 @@ class GraphMaster {
 
       //Invert the graph according to settings
       if (settings.type == "up"){
-        cy.nodes().forEach(node => {
+        this.cy.nodes().forEach(node => {
           const position = node.position();
           node.position({
             x: position.x,
@@ -389,8 +389,8 @@ class GraphMaster {
 
       //Center and zoom
       if (this.rootNodes.length > 0){
-        cy.fit(this.rootNodes, 50);
-        cy.zoom(1);
+        this.cy.fit(this.rootNodes, 50);
+        this.cy.zoom(1);
       }
       else{
         console.warn("No root nodes to fit in the viewport!");

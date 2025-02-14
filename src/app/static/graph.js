@@ -1,9 +1,13 @@
+import GraphMaster from './GraphMaster.js';
+import ImportExportManager from './ImportExportmanager.js';
 import TheoryHandler from './TheoryHandler.js';
-
+import SettingsUp from '../static/settingsUp.js';
+import SettingsDown from '../static/settingsDown.js';
 class GraphApp {
     constructor() {
         this.theoryHandler = new TheoryHandler();
         this.loadAndLogTheories();
+        this.setupEventListeners();
     }
 
     loadAndLogTheories() {
@@ -39,6 +43,96 @@ class GraphApp {
         this.theoryHandler.clearTheories();
         console.log('Theories cleared from localStorage');
     }
+
+    setupEventListeners() {
+        let graphMaster = new GraphMaster();
+    
+    let isModeUp = false;
+    const modeText = document.getElementById('modeText');
+    const modeSpecificSettings = document.getElementById('modeSpecificSettings');
+
+    function updateModeSpecificSettingsUI() {
+      modeSpecificSettings.innerHTML = '';
+
+      if (isModeUp) {
+        const checkbox = document.createElement('div');
+        checkbox.className = 'form-check';
+        checkbox.innerHTML = `
+          <input type="checkbox" id="showAxioms" class="form-check-input">
+          <label for="showAxioms" class="form-check-label">Show axioms</label>
+        `;
+        modeSpecificSettings.appendChild(checkbox);
+      } else {
+        const checkbox = document.createElement('div');
+        checkbox.className = 'form-check';
+        checkbox.innerHTML = `
+          <input type="checkbox" id="otherStartpoints" class="form-check-input">
+          <label for="otherStartpoints" class="form-check-label">Other startpoints</label>
+        `;
+        modeSpecificSettings.appendChild(checkbox);
+      }
+    }
+
+    updateModeSpecificSettingsUI();
+
+    document.getElementById('switchTypeButton').addEventListener('click', () => {
+      isModeUp = !isModeUp;
+      modeText.textContent = isModeUp
+        ? "Statements supporting theory statements"
+        : "Statements supported by theory statements";
+      updateModeSpecificSettingsUI();
+    });
+
+    function createGraphWithSettings(){
+      let setts;
+      if (isModeUp) {
+        setts = new SettingsUp();
+        setts.showAxioms = document.getElementById('showAxioms').checked;
+      } else {
+        setts = new SettingsDown();
+        setts.otherStartpoints = document.getElementById('otherStartpoints').checked;
+      }
+      setts.depth = Math.max(1, parseInt(document.getElementById('graphDepth').value) || 1);
+      setts.showAllEdges = document.querySelector('input[name="edgeDisplay"]:checked').value === "all";
+      setts.showOnlyCommon = document.getElementById('showOnlyCommon').checked;
+      return setts;
+    }
+
+    document.getElementById('submitSettingsButton').addEventListener('click', async () => {
+      let setts = createGraphWithSettings();
+      await graphMaster.createGraph(setts);
+      graphMaster.drawGraph(setts);
+    });
+    
+        //importExport 
+            const exportGraphBtn = document.getElementById('export-graph-btn');
+            const exportPngBtn = document.getElementById('export-png-btn');
+            const exportTextBtn = document.getElementById('export-text-btn');
+            const manager = new ImportExportManager(this.theoryHandler.theory1, this.theoryHandler.theory2)
+            // Funkcia, ktorá sa vykoná po kliknutí na tlačidlo
+            async function handleExportClick(event) {
+              const clickedButton = event.target.id;
+              if (clickedButton === 'export-graph-btn') {
+                manager.exportGraph();
+              } else if (clickedButton === 'export-png-btn') {
+                if(!graphMaster.cy){
+                  let setts = createGraphWithSettings();
+                  await graphMaster.createGraph(setts);
+                  graphMaster.drawGraph(setts);
+                }
+                manager.exportPNG(graphMaster.cy);
+              } else if (clickedButton === 'export-text-btn') {
+                let setts = createGraphWithSettings();
+                await graphMaster.createGraph(setts);
+                manager.exportTEXT(graphMaster.graph);
+              }
+            }
+            exportGraphBtn.addEventListener('click', handleExportClick);
+            exportPngBtn.addEventListener('click', handleExportClick);
+            exportTextBtn.addEventListener('click', handleExportClick);
+    }
+
+
 }
 
 // Initialize the application
