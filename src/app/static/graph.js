@@ -106,7 +106,7 @@ class GraphApp {
     
         //importExport 
             const exportGraphBtn = document.getElementById('export-graph-btn');
-            const exportPngBtn = document.getElementById('export-png-btn');
+            const exportJpgBtn = document.getElementById('export-jpg-btn');
             const exportTextBtn = document.getElementById('export-text-btn');
             const manager = new ImportExportManager(this.theoryHandler.theory1, this.theoryHandler.theory2)
             // Funkcia, ktorá sa vykoná po kliknutí na tlačidlo
@@ -114,13 +114,13 @@ class GraphApp {
               const clickedButton = event.target.id;
               if (clickedButton === 'export-graph-btn') {
                 manager.exportGraph();
-              } else if (clickedButton === 'export-png-btn') {
+              } else if (clickedButton === 'export-jpg-btn') {
                 if(!graphMaster.cy){
                   let setts = createGraphWithSettings();
                   await graphMaster.createGraph(setts);
                   graphMaster.drawGraph(setts);
                 }
-                manager.exportPNG(graphMaster.cy);
+                manager.exportJPG(graphMaster.cy);
               } else if (clickedButton === 'export-text-btn') {
                 let setts = createGraphWithSettings();
                 await graphMaster.createGraph(setts);
@@ -128,7 +128,7 @@ class GraphApp {
               }
             }
             exportGraphBtn.addEventListener('click', handleExportClick);
-            exportPngBtn.addEventListener('click', handleExportClick);
+            exportJpgBtn.addEventListener('click', handleExportClick);
             exportTextBtn.addEventListener('click', handleExportClick);
     }
 

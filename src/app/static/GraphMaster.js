@@ -256,7 +256,6 @@ class GraphMaster {
         console.error('No graph to draw.');
         return;
       }
-      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       this.cy = cytoscape({
         container: document.getElementById('cy'),
   

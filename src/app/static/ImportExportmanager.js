@@ -58,18 +58,18 @@ importTheory(file) {
       console.log("Export Graph: File generated and downloaded");
   }
   
-  exportPNG(cy) {
+  exportJPG(cy) {
     if (!cy) {
       console.error("Graph is not initialized.");
       return;
     }
-    // Exportuje PNG s bielym pozadím
-    const pngData = cy.png({ output: 'blob', bg: 'white' });
+    // Exportuje JPG s bielym pozadím
+    const jpgData = cy.jpg({ output: 'blob', bg: 'white', full: 'true', quality: '1'});
   
     // Vytvorenie odkazu na stiahnutie
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(pngData);
-    a.download = 'graph.png';
+    a.href = URL.createObjectURL(jpgData);
+    a.download = 'graph.jpg';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

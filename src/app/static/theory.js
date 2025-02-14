@@ -77,7 +77,7 @@ class TheoryApp {
             }
         });
 
-        // Import hendler ...................................................................................................
+        // Import hendler
         
             const importBtn = document.getElementById("import-btn");
             const fileInput = document.getElementById("import-file");
