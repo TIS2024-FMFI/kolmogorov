@@ -19,7 +19,7 @@ Kolmogorov is a web application designed to help mathematicians visualize and un
 ### Prerequisites
 - Python 3.7+
 - pip (Python package manager)
-- Node.js (for frontend development)
+- FuzzyWuzzy and Flask python libs
 
 ### Setup
 1. Clone the repository:
